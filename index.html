@@ -82,17 +82,9 @@
             100% { background-position: 0 0; }
         }
 
-        .progress-bar-bg {
-            height: 8px;
-            background: #2c3e50;
-            border-radius: 4px;
-            margin-top: 4px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            transition: width 0.5s ease-out;
+        .score-mouse {
+            transform: scaleX(-2) scaleY(2); /* 左右反転しつつ2倍に拡大 */
+            transform-origin: bottom center;
         }
 
         .log-box {
@@ -453,10 +445,14 @@ class Game {
                         </span>
                         <span class="text-lg font-black">${p.score}<span class="text-[9px] text-gray-400"> / ${WIN_SCORE}</span></span>
                     </div>
-                    <div class="progress-bar-bg w-full h-[6px]">
-                        <div class="progress-bar-fill" style="width:${progress}%; background-color:${p.color}"></div>
+                    <div class="relative w-full h-8 mt-2 border-b-2 border-dashed border-gray-500 bg-[#2c3e50] bg-opacity-30 rounded-t-sm">
+                        <div class="absolute right-0 bottom-0 text-[8px] text-gray-400 font-bold pr-1">GOAL</div>
+                        <div class="absolute bottom-0 transition-all duration-500 ease-out flex flex-col items-center z-10" style="left: calc((100% - 24px) * ${progress / 100});">
+                            <div class="${mouseClass} walking score-mouse" style="${mouseStyle}"></div>
+                            <div class="w-4 h-[4px] mt-[1px] rounded-full mb-[1px]" style="background-color:${p.color}"></div>
+                        </div>
                     </div>
-                    <div class="text-[9px] text-gray-300 mt-0.5 text-right min-h-[14px]">${invHtml ? '所持: ' + invHtml : ''}</div>
+                    <div class="text-[9px] text-gray-300 mt-1 text-right min-h-[14px]">${invHtml ? '所持: ' + invHtml : ''}</div>
                 </div>
                 <div class="mb-1 text-xs">手元: ${p.mice}匹<br/><div class="flex flex-wrap mt-0.5">${miceHtml}</div></div>
                 <div class="flex gap-1 overflow-x-auto p-1 bg-black bg-opacity-30 rounded min-h-[60px]">
