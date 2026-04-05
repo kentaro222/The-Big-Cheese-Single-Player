@@ -241,6 +241,7 @@ class Game {
             return; 
         }
 
+        // CPUを4人追加し、プレイヤー含め計5人に変更
         for (let i = 0; i < 5; i++) {
             this.players.push({
                 id: i,
@@ -421,11 +422,43 @@ class Game {
         this.cpuTimer = null;
         const cpu = this.players[this.auction.activePlayerIdx];
         const requiredBid = this.auction.highestBid + 1;
+        const currentCard = this.currentCard;
+
+        // 1. カードの基本価値を算出
+        let cardValue = 0;
+        if (currentCard.type === CARD_TYPES.NORMAL) {
+            cardValue = currentCard.value / 2 + 1; // 期待値より少し高めまで許容
+        } else {
+            cardValue = 6; // 特殊カードはそこそこ価値が高いとみなす
+        }
+
+        // 2. 状況による価値の補正（あと少しで勝てそうなら意欲アップ）
+        const remainingToWin = WIN_SCORE - cpu.score;
+        if (currentCard.type === CARD_TYPES.NORMAL && currentCard.value >= remainingToWin) {
+            cardValue += 5; 
+        }
+
+        // 3. 入札意欲（Willingness）の計算
+        let willingness = cardValue - requiredBid;
+        willingness += (cpu.mice / 10) * 2; // 手元のネズミに余裕があるほど強気
+        willingness += (Math.random() * 4) - 2; // ランダムなブレ (-2 〜 +2)
 
         const hasVeto = cpu.inventory.some(c => c.type === CARD_TYPES.VETO);
-        if (hasVeto && requiredBid > cpu.mice && Math.random() < 0.5) {
-            this.useVeto();
-            return;
+
+        // 4. VETO(却下)の戦略的使用
+        if (hasVeto) {
+            // 自分は払えないが、カードの価値が高い（欲しいのに手が出ない）場合
+            if (requiredBid > cpu.mice && cardValue > 5 && Math.random() < 0.6) {
+                this.useVeto();
+                return;
+            }
+            // 相手が安値で高価値のカードを持っていきそうな時の妨害
+            if (willingness < 0 && this.auction.highestBidder && this.auction.highestBidder.id !== cpu.id) {
+                if (cardValue > 6 && this.auction.highestBid < cardValue / 2 && Math.random() < 0.5) {
+                    this.useVeto();
+                    return;
+                }
+            }
         }
 
         if (requiredBid > cpu.mice) {
@@ -433,9 +466,15 @@ class Game {
             return;
         }
 
-        const willingness = Math.random() * cpu.mice; 
-        if (willingness > (requiredBid - 1)) {
-            document.getElementById('bidAmount').value = requiredBid;
+        // 5. 入札の実行
+        if (willingness > 0) {
+            let bidAmount = requiredBid;
+            // 時々、一気に競り上げて威圧する（ブラフ）
+            if (cpu.mice >= requiredBid + 2 && willingness > 3 && Math.random() < 0.2) {
+                bidAmount = requiredBid + Math.floor(Math.random() * 2) + 1;
+                if(bidAmount > cpu.mice) bidAmount = cpu.mice; // 所持数を超えないよう調整
+            }
+            document.getElementById('bidAmount').value = bidAmount;
             this.placeBid();
         } else {
             this.passBid();
@@ -603,7 +642,6 @@ class Game {
         if (completed.length > 0) {
             for (let job of completed) {
                 await this.resolveJob(job.player, job.card);
-                // 誰かが40点を超えたら即座にその他の仕事を中断して終了判定へ移る
                 if (this.players.some(p => p.score >= WIN_SCORE)) {
                     break;
                 }
@@ -665,7 +703,6 @@ class Game {
                 player.score += val;
                 this.addLog(`${player.name}: ${val}点獲得！`, "score");
                 this.renderPlayers();
-                // 判定結果に関わらず必ずPromiseを完了させ、進行を止めない
                 resolve(); 
             };
             
@@ -685,8 +722,19 @@ class Game {
                     this.lastDiceResult = finalResult;
 
                     if (player.isCPU) {
-                        const expectedAverage = card.value / 2;
-                        if (hasBigCheese && finalResult < expectedAverage && Math.random() < 0.8) {
+                        const remainingToWin = WIN_SCORE - player.score;
+                        let shouldReroll = false;
+
+                        // ゴール（40点）に到達しているなら絶対に振り直さない
+                        if (finalResult < remainingToWin) {
+                            const expectedAverage = card.value / 2;
+                            // 期待値未満、または「振り直せばゴールに届く可能性がある」なら高確率で振り直す
+                            if (finalResult <= expectedAverage || card.value >= remainingToWin) {
+                                shouldReroll = Math.random() < 0.85;
+                            }
+                        }
+
+                        if (hasBigCheese && shouldReroll) {
                             setTimeout(() => this.useBigCheese(), 1500);
                         } else {
                             setTimeout(() => this.closeModal(), 2000);
