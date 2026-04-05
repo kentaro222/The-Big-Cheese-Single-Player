@@ -142,13 +142,11 @@
                         <div class="text-xs text-yellow-400 mt-0.5">最高入札: <span id="highestBid" class="text-base">0</span> 匹</div>
                         <div id="highestBidderName" class="text-[9px] text-gray-300">(なし)</div>
                     </div>
-                    <div class="flex justify-center gap-1.5">
+                    <div class="flex justify-center gap-1.5 flex-wrap">
                         <input type="number" id="bidAmount" class="w-16 text-black p-1 text-sm rounded pixel-border" value="1" min="1">
                         <button onclick="game.placeBid()" class="bg-green-600 px-3 py-1 text-sm rounded pixel-border hover:bg-green-500 font-bold">入札</button>
                         <button onclick="game.passBid()" class="bg-red-600 px-3 py-1 text-sm rounded pixel-border hover:bg-red-500 font-bold">パス</button>
-                    </div>
-                    <div id="vetoArea" class="hidden text-center">
-                        <button onclick="game.useVeto()" class="bg-purple-600 text-[10px] px-3 py-1 rounded pixel-border hover:bg-purple-500">却下(VETO)を発動</button>
+                        <button id="vetoBtn" onclick="game.useVeto()" class="hidden bg-purple-600 px-3 py-1 text-sm rounded pixel-border hover:bg-purple-500 font-bold">却下(VETO)</button>
                     </div>
                 </div>
             </div>
@@ -403,14 +401,14 @@ class Game {
         document.getElementById('bidAmount').value = this.auction.highestBid + 1;
 
         const hasVeto = activePlayer.inventory.some(c => c.type === CARD_TYPES.VETO);
-        const vetoArea = document.getElementById('vetoArea');
-        vetoArea.classList.toggle('hidden', !hasVeto);
+        const vetoBtn = document.getElementById('vetoBtn');
+        vetoBtn.classList.toggle('hidden', !hasVeto);
 
         const bidControls = document.getElementById('bidControls');
 
         if (activePlayer.isCPU) {
             bidControls.classList.add('disabled-ui');
-            vetoArea.classList.add('hidden');
+            vetoBtn.classList.add('hidden');
             if (!this.cpuTimer) {
                 this.cpuTimer = setTimeout(() => this.processCPUTurn(), 1500);
             }
@@ -626,12 +624,6 @@ class Game {
     async resolveJob(player, card) {
         this.activeJob = { player, card };
         
-        if (card.type !== CARD_TYPES.NORMAL) {
-            player.inventory.push(card);
-            this.addLog(`${player.name}: ${this.getCardName(card)} 獲得`, "skill");
-            return Promise.resolve();
-        }
-
         return new Promise(resolve => {
             const overlay = document.getElementById('modalOverlay');
             const title = document.getElementById('modalTitle');
@@ -641,14 +633,36 @@ class Game {
             
             overlay.classList.remove('hidden');
             title.innerText = `${player.name}の仕事完了！`;
+            reroll.classList.add('hidden');
+            
+            if (card.type !== CARD_TYPES.NORMAL) {
+                dice.classList.remove('text-5xl');
+                dice.classList.add('text-2xl');
+                dice.innerHTML = `<span class="text-purple-600 font-bold">${this.getCardName(card)}</span><br><span class="text-sm text-black">を能力として獲得した！</span>`;
+                
+                player.inventory.push(card);
+                this.addLog(`${player.name}: ${this.getCardName(card)} 獲得`, "skill");
+                this.renderPlayers();
+
+                this.modalResolve = () => {
+                    resolve();
+                };
+
+                if (player.isCPU) {
+                    okBtn.style.display = 'none';
+                    setTimeout(() => this.closeModal(), 2000);
+                } else {
+                    okBtn.style.display = 'inline-block';
+                }
+                return;
+            }
+
             dice.innerText = "?";
             dice.classList.remove('text-2xl');
             dice.classList.add('text-5xl');
             
             const hasBigCheese = player.inventory.some(c => c.type === CARD_TYPES.BIG_CHEESE);
-            
-            reroll.classList.toggle('hidden', !hasBigCheese || player.isCPU);
-            okBtn.style.display = player.isCPU ? 'none' : 'inline-block';
+            okBtn.style.display = 'none';
 
             this.modalResolve = (val) => {
                 player.score += val;
@@ -681,6 +695,9 @@ class Game {
                         } else {
                             setTimeout(() => this.closeModal(), 2000);
                         }
+                    } else {
+                        if (hasBigCheese) reroll.classList.remove('hidden');
+                        okBtn.style.display = 'inline-block';
                     }
                 }
             }, rollInterval);
@@ -705,6 +722,7 @@ class Game {
             this.addLog(`${player.name}: ビッグ・チーズを使用して振り直し！`, "skill");
             
             document.getElementById('rerollArea').classList.add('hidden');
+            document.getElementById('modalOkBtn').style.display = 'none';
             
             setTimeout(() => {
                 let rollCount = 0;
@@ -724,6 +742,8 @@ class Game {
                         
                         if (player.isCPU) {
                             setTimeout(() => this.closeModal(), 2000);
+                        } else {
+                            document.getElementById('modalOkBtn').style.display = 'inline-block';
                         }
                     }
                 }, rollInterval);
@@ -736,7 +756,7 @@ class Game {
         const vIdx = activePlayer.inventory.findIndex(c => c.type === CARD_TYPES.VETO);
         if (vIdx > -1) {
             activePlayer.inventory.splice(vIdx, 1);
-            this.addLog(`${activePlayer.name}: 「却下」発動！`, "skill");
+            this.addLog(`${activePlayer.name}: 「却下(VETO)」発動！ 現在の仕事を破棄します。`, "skill");
             this.startNewRound();
         }
     }
