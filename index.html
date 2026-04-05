@@ -236,13 +236,11 @@ class Game {
     }
 
     init() {
-        // セーブデータがあれば読み込んで再開
         if (this.loadState()) {
             this.updateUI();
             return; 
         }
 
-        // 新規ゲームの初期化
         for (let i = 0; i < 4; i++) {
             this.players.push({
                 id: i,
@@ -269,9 +267,7 @@ class Game {
         this.startNewRound();
     }
 
-    // 状態の保存
     saveState() {
-        // ゲームが終了している場合はセーブしない
         if (this.players.some(p => p.score >= WIN_SCORE)) return;
 
         const state = {
@@ -285,7 +281,6 @@ class Game {
         localStorage.setItem('bigCheeseSave', JSON.stringify(state));
     }
 
-    // 状態の復元
     loadState() {
         const saved = localStorage.getItem('bigCheeseSave');
         if (saved) {
@@ -419,8 +414,6 @@ class Game {
         }
 
         this.renderPlayers();
-        
-        // 競りの順番が回ってきた状態で自動セーブを実行
         this.saveState();
     }
 
@@ -610,6 +603,10 @@ class Game {
         if (completed.length > 0) {
             for (let job of completed) {
                 await this.resolveJob(job.player, job.card);
+                // 誰かが40点を超えたら即座にその他の仕事を中断して終了判定へ移る
+                if (this.players.some(p => p.score >= WIN_SCORE)) {
+                    break;
+                }
             }
         }
         
@@ -668,9 +665,8 @@ class Game {
                 player.score += val;
                 this.addLog(`${player.name}: ${val}点獲得！`, "score");
                 this.renderPlayers();
-                
-                const isGameOver = this.players.some(p => p.score >= WIN_SCORE);
-                if (!isGameOver) resolve();
+                // 判定結果に関わらず必ずPromiseを完了させ、進行を止めない
+                resolve(); 
             };
             
             let rollCount = 0;
@@ -783,7 +779,6 @@ class Game {
         clearTimeout(this.cpuTimer);
         document.getElementById('bidControls').classList.add('disabled-ui');
 
-        // ゲームクリア時にセーブデータを消去する
         localStorage.removeItem('bigCheeseSave');
 
         const overlay = document.getElementById('modalOverlay');
@@ -860,3 +855,5 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
+
