@@ -26,7 +26,7 @@
         }
 
         .card {
-            width: 160px; /* カードを大きく表示 (120px -> 160px) */
+            width: 160px;
             height: 160px;
             background-color: #f1c40f;
             background-size: cover;
@@ -43,7 +43,7 @@
         }
 
         .card-wip {
-            width: 100px; /* 手元の進行中カードは小さく維持 */
+            width: 100px;
             height: 100px;
             background-color: #ecf0f1;
             text-shadow: none;
@@ -71,7 +71,7 @@
             background-color: transparent;
             border: none;
             background-size: 48px 16px;
-            background-position: 0 0; /* アイドル状態 (コマ1) */
+            background-position: 0 0;
         }
 
         .mouse-icon.walking {
@@ -87,7 +87,7 @@
         }
 
         .score-mouse {
-            transform: scaleX(-2) scaleY(2); /* 左右反転しつつ2倍に拡大 */
+            transform: scaleX(-2) scaleY(2);
             transform-origin: bottom center;
         }
 
@@ -116,7 +116,6 @@
             100% { transform: scale(1); }
         }
         
-        /* CPUターン中のUI無効化用クラス */
         .disabled-ui {
             pointer-events: none;
             opacity: 0.5;
@@ -165,6 +164,11 @@
         </div>
 
     </div>
+
+    <!-- リセットボタン -->
+    <div class="mt-8 text-center border-t border-gray-600 pt-4 pb-8">
+        <button onclick="confirmReset()" class="text-xs text-gray-400 hover:text-gray-200 underline decoration-gray-500 transition-colors">進行状態をリセットして最初から遊ぶ</button>
+    </div>
 </div>
 
 <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-80 hidden flex items-center justify-center z-50">
@@ -180,7 +184,34 @@
     </div>
 </div>
 
+<!-- リセット確認用モーダル -->
+<div id="resetModalOverlay" class="fixed inset-0 bg-black bg-opacity-80 hidden flex items-center justify-center z-50">
+    <div class="bg-white text-black p-6 rounded-xl pixel-border text-center max-w-sm w-[90%]">
+        <h2 class="text-xl font-bold mb-4 text-red-600">ゲームのリセット</h2>
+        <p class="text-sm mb-6 font-bold text-gray-700">現在の進行状態がすべて削除され、最初からやり直しになります。<br>本当によろしいですか？</p>
+        <div class="flex justify-center gap-4">
+            <button onclick="cancelReset()" class="bg-gray-400 text-white px-4 py-2 rounded pixel-border font-bold text-sm hover:bg-gray-500 transition-colors">キャンセル</button>
+            <button onclick="executeReset()" class="bg-red-600 text-white px-4 py-2 rounded pixel-border font-bold text-sm hover:bg-red-500 transition-colors">リセット</button>
+        </div>
+    </div>
+</div>
+
 <script>
+// --- リセット機能用のグローバル関数 ---
+function confirmReset() {
+    document.getElementById('resetModalOverlay').classList.remove('hidden');
+}
+
+function cancelReset() {
+    document.getElementById('resetModalOverlay').classList.add('hidden');
+}
+
+function executeReset() {
+    localStorage.removeItem('bigCheeseSave');
+    location.reload();
+}
+// ------------------------------------
+
 const PLAYER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22'];
 const WIN_SCORE = 40;
 const CARD_TYPES = {
@@ -207,6 +238,13 @@ class Game {
     }
 
     init() {
+        // セーブデータがあれば読み込んで再開
+        if (this.loadState()) {
+            this.updateUI();
+            return; 
+        }
+
+        // 新規ゲームの初期化
         for (let i = 0; i < 4; i++) {
             this.players.push({
                 id: i,
@@ -233,32 +271,50 @@ class Game {
         this.startNewRound();
     }
 
+    // 状態の保存
+    saveState() {
+        // ゲームが終了している場合はセーブしない
+        if (this.players.some(p => p.score >= WIN_SCORE)) return;
+
+        const state = {
+            players: this.players,
+            deck: this.deck,
+            currentCard: this.currentCard,
+            parentIdx: this.parentIdx,
+            auction: this.auction,
+            logHtml: this.log.innerHTML
+        };
+        localStorage.setItem('bigCheeseSave', JSON.stringify(state));
+    }
+
+    // 状態の復元
+    loadState() {
+        const saved = localStorage.getItem('bigCheeseSave');
+        if (saved) {
+            try {
+                const state = JSON.parse(saved);
+                this.players = state.players;
+                this.deck = state.deck;
+                this.currentCard = state.currentCard;
+                this.parentIdx = state.parentIdx;
+                this.auction = state.auction;
+                if (state.logHtml) {
+                    this.log.innerHTML = state.logHtml;
+                }
+                this.addLog("進行状態を復元し、再開しました。", "system");
+                return true;
+            } catch(e) {
+                console.error("セーブデータの読み込みに失敗しました:", e);
+            }
+        }
+        return false;
+    }
+
     shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
         }
-    }
-
-    renderScoreBoard() {
-        const board = document.getElementById('scoreBoard');
-        board.innerHTML = '';
-        this.players.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'player-score-card pixel-border';
-            card.style.borderLeftColor = p.color;
-            const progress = Math.min((p.score / WIN_SCORE) * 100, 100);
-            card.innerHTML = `
-                <div class="flex justify-between items-end mb-1">
-                    <span class="text-sm font-bold" style="color:${p.color}">${p.name}</span>
-                    <span class="text-lg font-black">${p.score}<span class="text-[10px] text-gray-400"> / ${WIN_SCORE}</span></span>
-                </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" style="width:${progress}%; background-color:${p.color}"></div>
-                </div>
-            `;
-            board.appendChild(card);
-        });
     }
 
     startNewRound() {
@@ -282,8 +338,8 @@ class Game {
             participants: this.players.map((_, i) => i)
         };
 
-        this.updateUI();
         this.addLog(`親: ${this.players[this.parentIdx].name}。競り開始。`, "system");
+        this.updateUI(); 
     }
 
     getCardName(card) {
@@ -292,7 +348,6 @@ class Game {
         return `ビッグ・チーズ`;
     }
 
-    // 用意されたイラスト画像のファイル名を返すように設定
     getCardImageUrl(card) {
         if (card.type === CARD_TYPES.NORMAL) {
             if (card.value === 2) return 'Card_2.png';
@@ -308,7 +363,6 @@ class Game {
         return ""; 
     }
 
-    // 用意されたネズミのスプライト画像のファイル名を返すように設定
     getMouseImageUrl() {
         return "Mouse_sheet.png";
     }
@@ -328,16 +382,13 @@ class Game {
             cardObj.style.backgroundColor = "#9b59b6";
         }
 
-        // イラスト画像の適用
         const imgUrl = this.getCardImageUrl(this.currentCard);
         if (imgUrl) {
             cardObj.style.backgroundImage = `url('${imgUrl}')`;
-            // 画像がある場合は文字を消す
             cardValEl.style.display = 'none';
             cardTypeEl.style.display = 'none';
         } else {
             cardObj.style.backgroundImage = "none";
-            // 画像がない場合は文字を表示
             cardValEl.style.display = 'block';
             cardTypeEl.style.display = 'block';
         }
@@ -370,6 +421,9 @@ class Game {
         }
 
         this.renderPlayers();
+        
+        // 競りの順番が回ってきた状態で自動セーブを実行
+        this.saveState();
     }
 
     processCPUTurn() {
@@ -411,7 +465,6 @@ class Game {
             card.className = `p-2 rounded-lg pixel-border flex flex-col transition-all ${this.auction.activePlayerIdx === p.id ? 'ring-2 ring-white scale-[1.02] z-20' : 'opacity-90'}`;
             card.style.backgroundColor = p.color + '44';
             
-            // 手元のネズミはアイドル状態（walkingクラスなし）
             let miceHtml = '';
             for(let i=0; i<p.mice; i++) miceHtml += `<div class="${mouseClass}" style="${mouseStyle}"></div>`;
 
@@ -421,7 +474,6 @@ class Game {
                 const bgStyle = imgUrl ? `background-image: url('${imgUrl}'); background-color: transparent;` : ``;
                 const textStyle = imgUrl ? `display: none;` : ``;
 
-                // 仕事中のネズミは歩行アニメーション（walkingクラス追加）
                 wipHtml += `
                     <div class="card card-wip pixel-border text-xs p-1 flex flex-col items-center justify-center text-black" style="${bgStyle}">
                         <b class="text-[10px]" style="${textStyle}">${this.getCardName(job.card)}</b>
@@ -563,10 +615,11 @@ class Game {
             }
         }
         
-        // 勝敗が決まっていなければ次のラウンドへ
         const isGameOver = this.players.some(p => p.score >= WIN_SCORE);
         if(!isGameOver) {
             this.startNewRound();
+        } else {
+            this.checkWinner();
         }
     }
 
@@ -597,31 +650,25 @@ class Game {
             reroll.classList.toggle('hidden', !hasBigCheese || player.isCPU);
             okBtn.style.display = player.isCPU ? 'none' : 'inline-block';
 
-            // バグの主要原因となっていた処理：
-            // updateUI() を呼ぶとタイマーが誤発動するため、表示の更新のみに変更
             this.modalResolve = (val) => {
                 player.score += val;
                 this.addLog(`${player.name}: ${val}点獲得！`, "score");
-                this.renderPlayers();    // スコアボードが統合されたため、これだけでOK
+                this.renderPlayers();
                 
-                const isGameOver = this.checkWinner();
-                // ゲーム終了していなければ次の処理へ進む
-                if (!isGameOver) {
-                    resolve();
-                }
+                const isGameOver = this.players.some(p => p.score >= WIN_SCORE);
+                if (!isGameOver) resolve();
             };
             
-            // サイコロを転がすアニメーション処理
             let rollCount = 0;
-            const maxRolls = 12; // 回転させる回数
-            const rollInterval = 60; // 切り替わる速度（ミリ秒）
+            const maxRolls = 12;
+            const rollInterval = 60;
 
             const rollAnimation = setInterval(() => {
                 dice.innerText = this.rollDice(card.value);
                 rollCount++;
                 
                 if (rollCount >= maxRolls) {
-                    clearInterval(rollAnimation); // アニメーション終了
+                    clearInterval(rollAnimation);
                     
                     const finalResult = this.rollDice(card.value);
                     dice.innerText = finalResult;
@@ -660,7 +707,6 @@ class Game {
             document.getElementById('rerollArea').classList.add('hidden');
             
             setTimeout(() => {
-                // こちらも同じくサイコロを転がすアニメーションを追加
                 let rollCount = 0;
                 const maxRolls = 12;
                 const rollInterval = 60;
@@ -697,7 +743,6 @@ class Game {
 
     closeModal() {
         document.getElementById('modalOverlay').classList.add('hidden');
-        // 二重呼び出しを防止するために、実行後に null にする
         if (this.modalResolve) {
             this.modalResolve(this.lastDiceResult);
             this.modalResolve = null; 
@@ -715,9 +760,11 @@ class Game {
     }
 
     showGameOver(winner) {
-        // 全てのタイマーと操作を停止
         clearTimeout(this.cpuTimer);
         document.getElementById('bidControls').classList.add('disabled-ui');
+
+        // ゲームクリア時にセーブデータを消去する
+        localStorage.removeItem('bigCheeseSave');
 
         const overlay = document.getElementById('modalOverlay');
         const title = document.getElementById('modalTitle');
@@ -736,7 +783,6 @@ class Game {
         okBtn.innerText = "もう一度遊ぶ";
         okBtn.style.display = 'inline-block';
         
-        // 再生ボタンの処理（元のアクションを上書き）
         okBtn.onclick = () => {
             overlay.classList.add('hidden');
             okBtn.innerText = "OK"; 
@@ -744,7 +790,6 @@ class Game {
             dice.classList.remove('text-2xl');
             dice.classList.add('text-5xl');
             
-            // ゲームの初期化
             this.players = [];
             this.deck = [];
             this.log.innerHTML = '<div class="text-gray-400">> ゲームを再開しました。</div>';
@@ -785,13 +830,13 @@ window.onload = () => {
     game = new Game();
 };
 
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then(reg => console.log('Service Worker registered', reg))
-        .catch(err => console.error('Service Worker registration failed', err));
-    });
-  }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.error('Service Worker registration failed', err));
+  });
+}
 </script>
 </body>
 </html>
