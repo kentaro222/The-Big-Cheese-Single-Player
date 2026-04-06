@@ -195,7 +195,6 @@
 </div>
 
 <script>
-// --- リセット機能用のグローバル関数 ---
 function confirmReset() {
     document.getElementById('resetModalOverlay').classList.remove('hidden');
 }
@@ -208,7 +207,6 @@ function executeReset() {
     localStorage.removeItem('bigCheeseSave');
     location.reload();
 }
-// ------------------------------------
 
 const PLAYER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22'];
 const WIN_SCORE = 40;
@@ -241,7 +239,6 @@ class Game {
             return; 
         }
 
-        // CPUを4人追加し、プレイヤー含め計5人に変更
         for (let i = 0; i < 5; i++) {
             this.players.push({
                 id: i,
@@ -406,7 +403,9 @@ class Game {
             bidControls.classList.add('disabled-ui');
             vetoBtn.classList.add('hidden');
             if (!this.cpuTimer) {
-                this.cpuTimer = setTimeout(() => this.processCPUTurn(), 1500);
+                // 考え中を演出するランダムなウェイト
+                const thinkTime = 800 + Math.random() * 800;
+                this.cpuTimer = setTimeout(() => this.processCPUTurn(), thinkTime);
             }
         } else {
             bidControls.classList.remove('disabled-ui');
@@ -418,66 +417,140 @@ class Game {
         this.saveState();
     }
 
+    // ★★★ ニート回避＆回転率重視のリアル思考AI ★★★
     processCPUTurn() {
         this.cpuTimer = null;
         const cpu = this.players[this.auction.activePlayerIdx];
         const requiredBid = this.auction.highestBid + 1;
         const currentCard = this.currentCard;
 
-        // 1. カードの基本価値を算出
-        let cardValue = 0;
-        if (currentCard.type === CARD_TYPES.NORMAL) {
-            cardValue = currentCard.value / 2 + 1; // 期待値より少し高めまで許容
-        } else {
-            cardValue = 6; // 特殊カードはそこそこ価値が高いとみなす
-        }
-
-        // 2. 状況による価値の補正（あと少しで勝てそうなら意欲アップ）
+        // 盤面状況
         const remainingToWin = WIN_SCORE - cpu.score;
-        if (currentCard.type === CARD_TYPES.NORMAL && currentCard.value >= remainingToWin) {
-            cardValue += 5; 
-        }
+        const topPlayer = this.players.reduce((prev, current) => (prev.score > current.score) ? prev : current);
+        const isTop = topPlayer.id === cpu.id;
+        const topRemaining = WIN_SCORE - topPlayer.score;
+        const topIsWinningAuction = this.auction.highestBidder && this.auction.highestBidder.id === topPlayer.id;
 
-        // 3. 入札意欲（Willingness）の計算
-        let willingness = cardValue - requiredBid;
-        willingness += (cpu.mice / 10) * 2; // 手元のネズミに余裕があるほど強気
-        willingness += (Math.random() * 4) - 2; // ランダムなブレ (-2 〜 +2)
+        const otherPlayers = this.auction.participants.filter(id => id !== cpu.id).map(id => this.players[id]);
+        const maxRivalMice = otherPlayers.length > 0 ? Math.max(...otherPlayers.map(p => p.mice)) : 0;
 
+        const hasBigCheese = cpu.inventory.some(c => c.type === CARD_TYPES.BIG_CHEESE);
         const hasVeto = cpu.inventory.some(c => c.type === CARD_TYPES.VETO);
 
-        // 4. VETO(却下)の戦略的使用
-        if (hasVeto) {
-            // 自分は払えないが、カードの価値が高い（欲しいのに手が出ない）場合
-            if (requiredBid > cpu.mice && cardValue > 5 && Math.random() < 0.6) {
-                this.useVeto();
-                return;
+        // 1. 基本となる期待値
+        let expectedScore = 0;
+        if (currentCard.type === CARD_TYPES.NORMAL) {
+            expectedScore = currentCard.value === 2 ? 1.5 : (currentCard.value + 1) / 2;
+        }
+
+        // 2. このカードに「いくらまで出せるか（限界額：Max Bid）」の算出
+        let maxBid = 0;
+
+        if (currentCard.type === CARD_TYPES.NORMAL) {
+            // 基本は期待値（少し強気に切り上げ）
+            maxBid = Math.ceil(expectedScore);
+
+            // ① 【ニート回避補正】ネズミを遊ばせておくくらいなら働かせる！
+            if (cpu.mice >= 8) {
+                maxBid += 3; // 資金潤沢ならかなり強気
+            } else if (cpu.mice >= 6) {
+                maxBid += 1; // まあまあ強気
             }
-            // 相手が安値で高価値のカードを持っていきそうな時の妨害
-            if (willingness < 0 && this.auction.highestBidder && this.auction.highestBidder.id !== cpu.id) {
-                if (cardValue > 6 && this.auction.highestBid < cardValue / 2 && Math.random() < 0.5) {
+
+            // ② 【回転率補正】小さい仕事はすぐ帰ってくるから高くても良い！
+            if (currentCard.value <= 6) {
+                maxBid += 2;
+            }
+
+            // ③ ビッグチーズ所持ボーナス（12, 20面体の価値が跳ね上がる）
+            if (hasBigCheese && currentCard.value >= 12) {
+                maxBid += Math.floor(Math.random() * 3) + 2; // +2〜+4のボーナス
+            }
+
+            // ④ 逆・拘束リスク（手持ちが少ないのにデカい仕事に手を出すと危険）
+            if (currentCard.value >= 12 && !hasBigCheese && cpu.mice <= 5) {
+                maxBid -= 2; 
+            }
+
+            // ⑤ リーチ補正（自分が勝てそうなら全ツッパ）
+            if (currentCard.value >= remainingToWin) {
+                maxBid = cpu.mice; 
+            }
+
+            // ⑥ 防衛補正（他人が勝てそうなら意地でも阻止）
+            if (!isTop && topRemaining <= currentCard.value && topIsWinningAuction) {
+                maxBid += Math.floor(Math.random() * 4) + 1; 
+            }
+
+            // ⑦ 人間らしい「気まぐれ（ゆらぎ）」
+            const mood = Math.floor(Math.random() * 5) - 2; // -2 から +2
+            maxBid += mood;
+
+        } else if (currentCard.type === CARD_TYPES.VETO) {
+            maxBid = 2; // VETOはほどほど
+            if (cpu.mice >= 7) maxBid += 1; // 暇なら買う
+            if (this.players.some(p => p.score >= WIN_SCORE - 15)) maxBid += 1; // 終盤は防衛用に価値上昇
+            maxBid += Math.floor(Math.random() * 3) - 1; // ゆらぎ -1〜+1
+        } else if (currentCard.type === CARD_TYPES.BIG_CHEESE) {
+            maxBid = 2;
+            if (cpu.mice >= 7) maxBid += 1;
+            maxBid += Math.floor(Math.random() * 3) - 1; // ゆらぎ -1〜+1
+        }
+
+        // 下限と上限のクリップ
+        if (maxBid < 1) maxBid = 1;
+        if (maxBid > cpu.mice) maxBid = cpu.mice;
+
+        // 3. VETO(却下)の発動判断
+        if (hasVeto) {
+            // 防御VETO：トップの上がり阻止
+            if (!isTop && topRemaining <= (currentCard.value || 0) && topIsWinningAuction) {
+                if (requiredBid > cpu.mice || requiredBid > maxBid) {
+                    this.useVeto();
+                    return;
+                }
+            }
+            // 嫌がらせVETO：自分は買えないが、美味しいカードを他人が安く持っていきそうな時
+            if (requiredBid > cpu.mice && expectedScore >= 4 && this.auction.highestBid <= 2) {
+                if (Math.random() < 0.3) { 
                     this.useVeto();
                     return;
                 }
             }
         }
 
+        // 4. 入札アクションの実行
         if (requiredBid > cpu.mice) {
             this.passBid();
             return;
         }
 
-        // 5. 入札の実行
-        if (willingness > 0) {
-            let bidAmount = requiredBid;
-            // 時々、一気に競り上げて威圧する（ブラフ）
-            if (cpu.mice >= requiredBid + 2 && willingness > 3 && Math.random() < 0.2) {
-                bidAmount = requiredBid + Math.floor(Math.random() * 2) + 1;
-                if(bidAmount > cpu.mice) bidAmount = cpu.mice; // 所持数を超えないよう調整
+        // チキンレース判定（わざと吊り上げるブラフ）
+        let tryBluff = false;
+        if (requiredBid > maxBid && currentCard.type === CARD_TYPES.NORMAL) {
+            // 現在の要求額が適正価格に近く、ライバルの資金に余裕がある場合、相手に削らせる
+            if (requiredBid <= expectedScore + 1 && maxRivalMice >= requiredBid + 1) {
+                if (Math.random() < 0.4) { 
+                    tryBluff = true;
+                }
             }
+        }
+
+        // 自分のMax Bid以内、またはチキンレースに乗る場合
+        if (requiredBid <= maxBid || tryBluff) {
+            let bidAmount = requiredBid;
+            
+            // 資金に余裕がある時、威圧のために「+2〜+3」の一気釣り上げを行ってくる
+            if (!tryBluff && maxBid >= requiredBid + 2 && cpu.mice >= requiredBid + 3 && Math.random() < 0.3) {
+                const maxJump = Math.min(3, maxBid - requiredBid);
+                const jump = Math.floor(Math.random() * maxJump) + 1;
+                bidAmount = requiredBid + jump;
+            }
+
             document.getElementById('bidAmount').value = bidAmount;
             this.placeBid();
         } else {
-            this.passBid();
+            this.passBid(); // 予算オーバーなら降りる
         }
     }
 
@@ -903,3 +976,5 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
+
