@@ -1,4 +1,4 @@
-const CACHE_NAME = 'big-cheese-v9';
+const CACHE_NAME = 'big-cheese-v10';
 const ASSETS_TO_CACHE = [
   'index.html',
   'manifest.json',
