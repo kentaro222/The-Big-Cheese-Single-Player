@@ -163,6 +163,7 @@
 
     </div>
 
+    <!-- リセットボタン -->
     <div class="mt-8 text-center border-t border-gray-600 pt-4 pb-8">
         <button onclick="confirmReset()" class="text-xs text-gray-400 hover:text-gray-200 underline decoration-gray-500 transition-colors">進行状態をリセットして最初から遊ぶ</button>
     </div>
@@ -182,6 +183,7 @@
     </div>
 </div>
 
+<!-- リセット確認用モーダル -->
 <div id="resetModalOverlay" class="fixed inset-0 bg-black bg-opacity-80 hidden flex items-center justify-center z-50">
     <div class="bg-white text-black p-6 rounded-xl pixel-border text-center max-w-sm w-[90%]">
         <h2 class="text-xl font-bold mb-4 text-red-600">ゲームのリセット</h2>
@@ -402,7 +404,6 @@ class Game {
             bidControls.classList.add('disabled-ui');
             vetoBtn.classList.add('hidden');
             if (!this.cpuTimer) {
-                // 考え中を演出するランダムなウェイト
                 const thinkTime = 800 + Math.random() * 800;
                 this.cpuTimer = setTimeout(() => this.processCPUTurn(), thinkTime);
             }
@@ -416,13 +417,44 @@ class Game {
         this.saveState();
     }
 
+    getExpectedScore(card) {
+        if (!card || card.type !== CARD_TYPES.NORMAL) return 0;
+        if (card.value === 2) return 1.5;
+        return (card.value + 1) / 2;
+    }
+
+    // ★★★ 特殊カード2枚目問題＆チキンレース対応AI ★★★
     processCPUTurn() {
         this.cpuTimer = null;
         const cpu = this.players[this.auction.activePlayerIdx];
         const requiredBid = this.auction.highestBid + 1;
         const currentCard = this.currentCard;
 
-        const remainingToWin = WIN_SCORE - cpu.score;
+        const virtualScores = this.players.map(p => {
+            let wipSum = 0;
+            p.wip.forEach(job => {
+                wipSum += this.getExpectedScore(job.card);
+            });
+            return { id: p.id, vScore: p.score + wipSum, mice: p.mice };
+        });
+
+        const myVirtualScore = virtualScores.find(v => v.id === cpu.id).vScore;
+        const currentExpected = this.getExpectedScore(currentCard);
+
+        let someoneWillWin = false;
+        let winningPlayerId = -1;
+        for (let vs of virtualScores) {
+            if (vs.id !== cpu.id) {
+                if (vs.vScore + currentExpected >= WIN_SCORE) {
+                    someoneWillWin = true;
+                    winningPlayerId = vs.id;
+                    break;
+                }
+            }
+        }
+
+        const iWillWin = (myVirtualScore + currentExpected >= WIN_SCORE);
+
         const topPlayer = this.players.reduce((prev, current) => (prev.score > current.score) ? prev : current);
         const isTop = topPlayer.id === cpu.id;
         const topRemaining = WIN_SCORE - topPlayer.score;
@@ -434,52 +466,62 @@ class Game {
         const hasBigCheese = cpu.inventory.some(c => c.type === CARD_TYPES.BIG_CHEESE);
         const hasVeto = cpu.inventory.some(c => c.type === CARD_TYPES.VETO);
 
-        let expectedScore = 0;
-        if (currentCard.type === CARD_TYPES.NORMAL) {
-            expectedScore = currentCard.value === 2 ? 1.5 : (currentCard.value + 1) / 2;
-        }
-
         let maxBid = 0;
+        let isDesperateMode = false;
 
         if (currentCard.type === CARD_TYPES.NORMAL) {
-            maxBid = Math.ceil(expectedScore);
+            maxBid = Math.ceil(currentExpected);
 
-            // ニート回避補正
-            if (cpu.mice >= 8) maxBid += 3;
-            else if (cpu.mice >= 6) maxBid += 1;
+            if (cpu.mice <= 4 && currentCard.value <= 6) {
+                maxBid = cpu.mice; 
+                isDesperateMode = true;
+            } else {
+                if (cpu.mice >= 8) maxBid += 1;
+                if (currentCard.value <= 6) maxBid += 1; 
+            }
 
-            // 回転率補正
-            if (currentCard.value <= 6) maxBid += 2;
-
-            // ビッグチーズ所持ボーナス
             if (hasBigCheese && currentCard.value >= 12) maxBid += Math.floor(Math.random() * 3) + 2;
-
-            // 逆・拘束リスク
             if (currentCard.value >= 12 && !hasBigCheese && cpu.mice <= 5) maxBid -= 2; 
 
-            // リーチ補正
-            if (currentCard.value >= remainingToWin) maxBid = cpu.mice; 
-
-            // 防衛補正
-            if (!isTop && topRemaining <= currentCard.value && topIsWinningAuction) maxBid += Math.floor(Math.random() * 4) + 1; 
-
-            // ゆらぎ
-            const mood = Math.floor(Math.random() * 5) - 2; 
+            const mood = Math.floor(Math.random() * 3) - 1; 
             maxBid += mood;
 
+            if (currentCard.value === 2 && maxBid > 3) maxBid = 3;
+            if (currentCard.value === 4 && maxBid > 4) maxBid = 4;
+            if (currentCard.value === 6 && maxBid > 5) maxBid = 5;
+
+            if (iWillWin) {
+                maxBid = cpu.mice; 
+                isDesperateMode = false;
+            } else if (someoneWillWin) {
+                maxBid = cpu.mice; 
+                isDesperateMode = false;
+            }
+
         } else if (currentCard.type === CARD_TYPES.VETO) {
-            maxBid = 2; 
-            if (cpu.mice >= 7) maxBid += 1;
-            if (this.players.some(p => p.score >= WIN_SCORE - 15)) maxBid += 1;
-            maxBid += Math.floor(Math.random() * 3) - 1;
+            // ★ ダブり対策：既に持っているなら価値激減
+            if (hasVeto) {
+                maxBid = 1; 
+                if (cpu.mice >= 8) maxBid += 1; // 余裕があれば2匹まで
+            } else {
+                maxBid = 2; 
+                if (cpu.mice >= 7) maxBid += 1;
+                if (virtualScores.some(v => v.vScore >= 30)) maxBid += 1;
+                maxBid += Math.floor(Math.random() * 2);
+            }
 
         } else if (currentCard.type === CARD_TYPES.BIG_CHEESE) {
-            maxBid = 2;
-            if (cpu.mice >= 7) maxBid += 1;
-            maxBid += Math.floor(Math.random() * 3) - 1;
+            // ★ ダブり対策：既に持っているなら価値激減
+            if (hasBigCheese) {
+                maxBid = 1;
+                if (cpu.mice >= 8) maxBid += 1;
+            } else {
+                maxBid = 2;
+                if (cpu.mice >= 7) maxBid += 1;
+                maxBid += Math.floor(Math.random() * 2);
+            }
 
-            // ★★★ ビッグチーズ到着ブロック・チキンレース ★★★
-            // ライバルが「10面体以上」の仕事を進行中かチェックし、残りターン数を調べる
+            // 到着ブロック（ダブっていても、相手への嫌がらせとしては有効）
             let maxRivalBigJobTurns = 0;
             this.auction.participants.forEach(pid => {
                 if (pid !== cpu.id) {
@@ -494,15 +536,11 @@ class Game {
                 }
             });
 
-            // もし相手のデカい仕事が完了する前にビッグチーズが届いてしまう（現在額が安い）場合
             if (maxRivalBigJobTurns > 0) {
-                // 最低でも「相手の残りターン数」と同じ額に釣り上げれば、間に合わなくさせられる
                 const blockBid = maxRivalBigJobTurns;
                 if (maxBid < blockBid) {
                     maxBid = blockBid;
-                    // ブロックのために全財産を突っ込むと危険なので、手持ちに少し余裕を残す（最大でも全財産-2）
                     if (maxBid > cpu.mice - 2) maxBid = cpu.mice - 2; 
-                    if (maxBid < 1) maxBid = 1;
                 }
             }
         }
@@ -510,15 +548,18 @@ class Game {
         if (maxBid < 1) maxBid = 1;
         if (maxBid > cpu.mice) maxBid = cpu.mice;
 
-        // VETOの発動判断
-        if (hasVeto) {
-            if (!isTop && topRemaining <= (currentCard.value || 0) && topIsWinningAuction) {
-                if (requiredBid > cpu.mice || requiredBid > maxBid) {
-                    this.useVeto();
-                    return;
+        // VETO発動判断
+        if (hasVeto && currentCard.type === CARD_TYPES.NORMAL) {
+            if (someoneWillWin) {
+                const topBidder = this.auction.highestBidder;
+                if (topBidder && topBidder.id === winningPlayerId) {
+                    if (requiredBid > cpu.mice || requiredBid > maxBid || Math.random() < 0.8) {
+                        this.useVeto();
+                        return;
+                    }
                 }
             }
-            if (requiredBid > cpu.mice && expectedScore >= 4 && this.auction.highestBid <= 2) {
+            if (requiredBid > cpu.mice && currentExpected >= 3.5 && this.auction.highestBid <= 2) {
                 if (Math.random() < 0.3) { 
                     this.useVeto();
                     return;
@@ -526,18 +567,27 @@ class Game {
             }
         }
 
-        // 予算オーバーなら降りる
         if (requiredBid > cpu.mice) {
             this.passBid();
             return;
         }
 
-        // わざと吊り上げるブラフ
+        // ★ チキンレース（ブラフ）の拡張
         let tryBluff = false;
-        if (requiredBid > maxBid && currentCard.type === CARD_TYPES.NORMAL) {
-            if (requiredBid <= expectedScore + 1 && maxRivalMice >= requiredBid + 1) {
-                if (Math.random() < 0.4) { 
-                    tryBluff = true;
+        if (requiredBid > maxBid && !someoneWillWin) {
+            if (currentCard.type === CARD_TYPES.NORMAL) {
+                if (requiredBid <= currentExpected + 1 && maxRivalMice >= requiredBid + 1) {
+                    if (Math.random() < 0.3) { 
+                        tryBluff = true;
+                    }
+                }
+            } else {
+                // 特殊カードに対するチキンレース
+                // 自分が2枚目で欲しくなくても、相手に1匹などで楽に取らせないように釣り上げる
+                if (requiredBid <= 2 && maxRivalMice >= requiredBid + 1) {
+                    if (Math.random() < 0.5) { // 50%の確率で嫌がらせ釣り上げ
+                        tryBluff = true;
+                    }
                 }
             }
         }
@@ -545,9 +595,10 @@ class Game {
         if (requiredBid <= maxBid || tryBluff) {
             let bidAmount = requiredBid;
             
-            // 威圧の一気釣り上げ
-            if (!tryBluff && maxBid >= requiredBid + 2 && cpu.mice >= requiredBid + 3 && Math.random() < 0.3) {
-                const maxJump = Math.min(3, maxBid - requiredBid);
+            if (isDesperateMode && !tryBluff && maxBid === cpu.mice && cpu.mice >= requiredBid) {
+                bidAmount = cpu.mice;
+            } else if (!tryBluff && !someoneWillWin && !iWillWin && maxBid >= requiredBid + 2 && cpu.mice >= requiredBid + 3 && Math.random() < 0.2) {
+                const maxJump = Math.min(2, maxBid - requiredBid);
                 const jump = Math.floor(Math.random() * maxJump) + 1;
                 bidAmount = requiredBid + jump;
             }
@@ -740,7 +791,7 @@ class Game {
         return new Promise(resolve => {
             const overlay = document.getElementById('modalOverlay');
             const title = document.getElementById('modalTitle');
-            const diceTypeDisplay = document.getElementById('diceTypeDisplay'); // ★追加
+            const diceTypeDisplay = document.getElementById('diceTypeDisplay');
             const dice = document.getElementById('diceDisplay');
             const reroll = document.getElementById('rerollArea');
             const okBtn = document.getElementById('modalOkBtn');
@@ -750,7 +801,7 @@ class Game {
             reroll.classList.add('hidden');
             
             if (card.type !== CARD_TYPES.NORMAL) {
-                diceTypeDisplay.classList.add('hidden'); // 特殊カードなら隠す
+                diceTypeDisplay.classList.add('hidden'); 
                 
                 dice.classList.remove('text-5xl');
                 dice.classList.add('text-2xl');
@@ -773,7 +824,6 @@ class Game {
                 return;
             }
 
-            // ★追加：サイコロの種類を表示
             diceTypeDisplay.innerText = `【 ${card.value}面体サイコロ 】`;
             diceTypeDisplay.classList.remove('hidden');
 
@@ -810,8 +860,10 @@ class Game {
                         const remainingToWin = WIN_SCORE - player.score;
                         let shouldReroll = false;
 
+                        // ゴール（40点）に到達しているなら絶対に振り直さない
                         if (finalResult < remainingToWin) {
                             const expectedAverage = card.value / 2;
+                            // 期待値未満、または「振り直せばゴールに届く可能性がある」なら高確率で振り直す
                             if (finalResult <= expectedAverage || card.value >= remainingToWin) {
                                 shouldReroll = Math.random() < 0.85;
                             }
@@ -914,13 +966,13 @@ class Game {
 
         const overlay = document.getElementById('modalOverlay');
         const title = document.getElementById('modalTitle');
-        const diceTypeDisplay = document.getElementById('diceTypeDisplay'); // ★追加
+        const diceTypeDisplay = document.getElementById('diceTypeDisplay'); 
         const dice = document.getElementById('diceDisplay');
         const reroll = document.getElementById('rerollArea');
         const okBtn = document.getElementById('modalOkBtn');
 
         overlay.classList.remove('hidden');
-        diceTypeDisplay.classList.add('hidden'); // 終了時は隠す
+        diceTypeDisplay.classList.add('hidden'); 
         title.innerText = `ゲーム終了！`;
         
         dice.classList.remove('text-5xl');
@@ -988,5 +1040,3 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
-
-
