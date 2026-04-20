@@ -95,11 +95,11 @@
         }
 
         .log-box {
-            height: 120px; /* 文字を大きくした分、高さを少し確保 */
+            height: 120px;
             overflow-y: auto;
             background: rgba(0,0,0,0.7);
             padding: 8px;
-            font-size: 0.9rem; /* 0.75rem -> 0.9rem */
+            font-size: 0.9rem;
             border: 2px solid #000;
         }
 
@@ -107,7 +107,7 @@
             background: #e67e22;
             color: white;
             padding: 1px 4px;
-            font-size: 12px; /* 10px -> 12px */
+            font-size: 12px;
             border-radius: 3px;
             border: 1px solid #000;
             margin-right: 4px;
@@ -128,6 +128,15 @@
 <body class="p-2 sm:p-4 text-base">
 
 <div id="app" class="max-w-6xl mx-auto">
+    <div class="flex items-center justify-center gap-3 mb-6">
+        <h1 class="text-3xl font-bold">The Big Cheese</h1>
+        <a href="bigcheese_guide.html" target="_blank" rel="noopener noreferrer" 
+           class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xl font-bold hover:bg-white hover:text-[#2c3e50] transition-colors"
+           title="プレイガイドを開く">
+            ?
+        </a>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-6">
         
         <div class="lg:col-span-1 flex flex-col items-center space-y-2">
@@ -176,6 +185,7 @@
 </div>
 
 <script>
+// JavaScript部分は変更なし
 function confirmReset() {
     document.getElementById('resetModalOverlay').classList.remove('hidden');
 }
@@ -766,8 +776,8 @@ class Game {
                 diceTypeDisplay.classList.add('hidden'); 
                 
                 dice.classList.remove('text-6xl');
-                dice.classList.add('text-3xl'); // text-2xl -> text-3xl
-                dice.innerHTML = `<span class="text-purple-600 font-bold">${this.getCardName(card)}</span><br><span class="text-base text-black">を能力として獲得した！</span>`; // text-sm -> text-base
+                dice.classList.add('text-3xl'); 
+                dice.innerHTML = `<span class="text-purple-600 font-bold">${this.getCardName(card)}</span><br><span class="text-base text-black">を能力として獲得した！</span>`; 
                 
                 player.inventory.push(card);
                 this.addLog(`${player.name}: ${this.getCardName(card)} 獲得`, "skill");
@@ -791,7 +801,7 @@ class Game {
 
             dice.innerText = "?";
             dice.classList.remove('text-3xl');
-            dice.classList.add('text-6xl'); // text-5xl -> text-6xl
+            dice.classList.add('text-6xl'); 
             
             const hasBigCheese = player.inventory.some(c => c.type === CARD_TYPES.BIG_CHEESE);
             okBtn.style.display = 'none';
@@ -936,8 +946,8 @@ class Game {
         title.innerText = `ゲーム終了！`;
         
         dice.classList.remove('text-6xl');
-        dice.classList.add('text-3xl'); // text-2xl -> text-3xl
-        dice.innerHTML = `<div class="mt-2 text-gray-800">勝者: <span style="color:${winner.color}">${winner.name}</span></div><div class="text-4xl mt-2">${winner.score} 点</div>`; // text-3xl -> text-4xl
+        dice.classList.add('text-3xl'); 
+        dice.innerHTML = `<div class="mt-2 text-gray-800">勝者: <span style="color:${winner.color}">${winner.name}</span></div><div class="text-4xl mt-2">${winner.score} 点</div>`; 
         reroll.classList.add('hidden');
         
         okBtn.innerText = "もう一度遊ぶ";
@@ -948,7 +958,7 @@ class Game {
             okBtn.innerText = "OK"; 
             okBtn.onclick = () => game.closeModal(); 
             dice.classList.remove('text-3xl');
-            dice.classList.add('text-6xl'); // text-5xl -> text-6xl
+            dice.classList.add('text-6xl'); 
             
             this.players = [];
             this.deck = [];
@@ -978,7 +988,7 @@ class Game {
 
     message(msg) {
         const div = document.createElement('div');
-        div.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-red-600 text-white p-4 rounded pixel-border z-[100] pop font-bold text-lg"; // 文字を少し大きくした
+        div.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-red-600 text-white p-4 rounded pixel-border z-[100] pop font-bold text-lg"; 
         div.innerText = msg;
         document.body.appendChild(div);
         setTimeout(() => div.remove(), 2000);
