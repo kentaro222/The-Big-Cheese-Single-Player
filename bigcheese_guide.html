@@ -243,13 +243,25 @@
         }
     </style>
 </head>
+<script>
+function smartReturn() {
+    // 1. ブラウザの履歴がある場合は、前の画面（ゲーム画面）に戻る
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        // 2. 直接URLを叩いた場合など履歴がない場合は、index.html へ遷移する
+        // window.close() はアプリを終了させてしまう可能性があるため避ける
+        window.location.href = 'index.html';
+    }
+}
+</script>
 <body>
 
 <div class="container">
     <div class="page-header">
         <h1 class="page-title">The Big Cheese - 遊び方指南書</h1>
-        <button onclick="window.close();" class="btn-close pixel-border">
-            <span>✖</span> ゲームに戻る（タブを閉じる）
+        <button onclick="smartReturn();" class="btn-close pixel-border">
+            <span>✖</span> ゲームに戻る
         </button>
     </div>
 
@@ -333,10 +345,9 @@
         </section>
 
     </div>
-
     <div class="page-footer">
-        <p class="footer-note">※ブラウザの仕様によりボタンで閉じられない場合は、ブラウザのタブをそのまま閉じてください。</p>
-        <button onclick="window.close();" class="btn-close large pixel-border">
+        <p class="footer-note"></p>
+        <button onclick="smartReturn();" class="btn-close large pixel-border">
             <span>✖</span> ゲーム画面に戻る
         </button>
     </div>
