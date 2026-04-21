@@ -1,6 +1,8 @@
-const CACHE_NAME = 'big-cheese-v11';
+const CACHE_NAME = 'big-cheese-v12'; 
+
 const ASSETS_TO_CACHE = [
   'index.html',
+  'bigcheese_guide.html', // ↓変更点2: ガイドページもオフラインで見られるように追加
   'manifest.json',
   // ゲーム内で使用されている画像資産
   'Card_2.png',
@@ -13,6 +15,7 @@ const ASSETS_TO_CACHE = [
   'Card_Veto.png',
   'Card_TheBigCheese.png',
   'Mouse_sheet.png'
+  // ※システムフォントを使うため、ここに .ttf ファイルを書く必要はありません！
 ];
 
 // インストール時にキャッシュ
@@ -34,6 +37,7 @@ self.addEventListener('activate', (event) => {
     })
   );
 });
+
 // フェッチ時にキャッシュがあればそれを返し、なければネットワークから取得
 self.addEventListener('fetch', (event) => {
   event.respondWith(

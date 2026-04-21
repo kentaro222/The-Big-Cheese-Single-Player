@@ -4,115 +4,329 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Big Cheese - プレイングガイド</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
     <style>
+        /* =========================================
+           Reset & Base Styles
+           ========================================= */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'DotGothic16', sans-serif;
+            /* ↓ ここをシステムフォントの組み合わせに変更 ↓ */
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            
             background-color: #2c3e50;
             color: #ecf0f1;
-            line-height: 1.6;
+            overflow-x: hidden;
+            
+            /* ※画像のドット絵（ネズミやカード）をくっきりさせる設定は残します */
+            image-rendering: pixelated; 
+            margin: 0;
+            padding: 0.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
         }
+        @media (min-width: 640px) {
+            body { padding: 2rem; }
+        }
+
+        h1, h2, h3, p { margin: 0; }
+        
+        button {
+            cursor: pointer;
+            font-family: inherit;
+            border: none;
+            background: none;
+        }
+
+        /* =========================================
+           Layout & Components
+           ========================================= */
+        .container {
+            max-width: 56rem; /* 896px */
+            margin: 0 auto;
+        }
+
+        /* 共通ユーティリティ */
         .pixel-border {
             border: 4px solid #000;
             box-shadow: 4px 4px 0px #000;
         }
+
+        /* ヘッダー周り */
+        .page-header {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #4b5563;
+            padding-bottom: 1rem;
+        }
+        @media (min-width: 640px) {
+            .page-header { flex-direction: row; }
+        }
+
+        .page-title {
+            font-size: 1.875rem;
+            font-weight: bold;
+            color: #facc15;
+        }
+
+        .btn-close {
+            background-color: #dc2626;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+        .btn-close:hover { background-color: #ef4444; }
+        .btn-close.large {
+            font-size: 1.25rem;
+            padding: 1rem 2rem;
+            display: inline-flex;
+        }
+
+        /* セクション（各章） */
+        .sections-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .guide-section {
+            background-color: #1f2937;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            display: inline-block;
+            border-bottom: 1px solid currentColor;
+        }
+        .title-blue { color: #93c5fd; }
+        .title-green { color: #86efac; }
+        .title-purple { color: #d8b4fe; }
+
+        .desc-text {
+            font-size: 1.125rem;
+        }
+
+        /* 手順グリッド (STEP 1, 2, 3) */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .steps-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        .step-card {
+            background-color: #374151;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            border: 2px solid #4b5563;
+            position: relative;
+            margin-top: 1rem; /* バッジのための余白 */
+        }
+
+        .step-badge {
+            position: absolute;
+            top: -1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #22c55e;
+            color: black;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            border: 2px solid black;
+            font-size: 0.875rem;
+        }
+
+        .step-title {
+            font-weight: bold;
+            font-size: 1.25rem;
+            margin: 0.5rem 0;
+            color: #facc15;
+        }
+
+        .step-icon {
+            font-size: 2.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-desc {
+            font-size: 0.875rem;
+            text-align: left;
+        }
+
+        /* 重要なポイント */
+        .note-box {
+            margin-top: 1.5rem;
+            background-color: rgba(127, 29, 29, 0.5);
+            padding: 1rem;
+            border-radius: 0.25rem;
+            border: 1px solid #ef4444;
+        }
+        .note-title {
+            font-weight: bold;
+            color: #fca5a5;
+        }
+
+        /* カードの種類リスト */
+        .card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background-color: #374151;
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+        }
+
         .card-demo {
             width: 80px;
             height: 80px;
             border-radius: 8px;
             background-size: cover;
             background-position: center;
-            image-rendering: pixelated; /* ドット絵をくっきり表示 */
-            flex-shrink: 0; /* レイアウト崩れ防止 */
+            image-rendering: pixelated;
+            flex-shrink: 0;
+        }
+
+        .card-name-yellow {
+            font-weight: bold;
+            font-size: 1.25rem;
+            color: #facc15;
+            margin-bottom: 0.25rem;
+        }
+        
+        .card-name-purple {
+            font-weight: bold;
+            font-size: 1.25rem;
+            color: #c084fc;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-info {
+            font-size: 0.875rem;
+        }
+
+        /* フッター */
+        .page-footer {
+            margin-top: 3rem;
+            text-align: center;
+            padding-bottom: 2rem;
+        }
+        .footer-note {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
         }
     </style>
 </head>
-<body class="p-4 sm:p-8 max-w-4xl mx-auto">
+<body>
 
-    <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 border-b border-gray-600 pb-4">
-        <h1 class="text-3xl font-bold text-yellow-400">The Big Cheese - 遊び方指南書</h1>
-        <button onclick="window.close();" class="bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-lg pixel-border font-bold flex items-center gap-2">
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">The Big Cheese - 遊び方指南書</h1>
+        <button onclick="window.close();" class="btn-close pixel-border">
             <span>✖</span> ゲームに戻る（タブを閉じる）
         </button>
     </div>
 
-    <div class="space-y-8">
-        <section class="bg-gray-800 p-6 rounded-xl pixel-border">
-            <h2 class="text-2xl font-bold text-blue-300 mb-4 border-b border-blue-300 inline-block">1. ゲームの目的</h2>
-            <p class="text-lg">
+    <div class="sections-wrapper">
+        <section class="guide-section pixel-border">
+            <h2 class="section-title title-blue">1. ゲームの目的</h2>
+            <p class="desc-text">
                 プレイヤーはネズミのボスとなり、部下のネズミたちを「仕事」に派遣します。<br>
                 仕事を完了させて得点を稼ぎ、<strong>誰よりも早く【40点】に到達したプレイヤーが勝利</strong>となります。
             </p>
         </section>
 
-        <section class="bg-gray-800 p-6 rounded-xl pixel-border">
-            <h2 class="text-2xl font-bold text-green-300 mb-4 border-b border-green-300 inline-block">2. ゲームの流れ</h2>
+        <section class="guide-section pixel-border">
+            <h2 class="section-title title-green">2. ゲームの流れ</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <div class="bg-gray-700 p-4 rounded-lg text-center border-2 border-gray-600 relative">
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-500 text-black font-bold px-3 py-1 rounded-full border-2 border-black">STEP 1</div>
-                    <h3 class="font-bold text-xl mt-2 mb-2 text-yellow-400">競り（入札）</h3>
-                    <div class="text-4xl mb-2">🏷️</div>
-                    <p class="text-sm text-left">
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-badge">STEP 1</div>
+                    <h3 class="step-title">競り（入札）</h3>
+                    <div class="step-icon">🏷️</div>
+                    <p class="step-desc">
                         場に出た「仕事（カード）」に対して、手持ちのネズミ（部下）を何匹派遣するかを宣言して競り合います。最も多く宣言した人が仕事を落札します。
                     </p>
                 </div>
                 
-                <div class="bg-gray-700 p-4 rounded-lg text-center border-2 border-gray-600 relative">
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-500 text-black font-bold px-3 py-1 rounded-full border-2 border-black">STEP 2</div>
-                    <h3 class="font-bold text-xl mt-2 mb-2 text-yellow-400">仕事の進行</h3>
-                    <div class="text-4xl mb-2">⏳</div>
-                    <p class="text-sm text-left">
+                <div class="step-card">
+                    <div class="step-badge">STEP 2</div>
+                    <h3 class="step-title">仕事の進行</h3>
+                    <div class="step-icon">⏳</div>
+                    <p class="step-desc">
                         落札したネズミは「仕事中」になり、手元から減ります。<br>
                         <strong>他の仕事の競りが1回終わるごとに、ネズミが1匹ずつ手元に帰ってきます。</strong>
                     </p>
                 </div>
 
-                <div class="bg-gray-700 p-4 rounded-lg text-center border-2 border-gray-600 relative">
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-500 text-black font-bold px-3 py-1 rounded-full border-2 border-black">STEP 3</div>
-                    <h3 class="font-bold text-xl mt-2 mb-2 text-yellow-400">報酬（サイコロ）</h3>
-                    <div class="text-4xl mb-2">🎲</div>
-                    <p class="text-sm text-left">
+                <div class="step-card">
+                    <div class="step-badge">STEP 3</div>
+                    <h3 class="step-title">報酬（サイコロ）</h3>
+                    <div class="step-icon">🎲</div>
+                    <p class="step-desc">
                         派遣したネズミが全員帰ってきたら仕事完了！<br>
                         カードに書かれた面の数のサイコロを振り、出た目と同じだけ「得点」が入ります。
                     </p>
                 </div>
             </div>
             
-            <div class="mt-6 bg-red-900 bg-opacity-50 p-4 rounded border border-red-500">
-                <span class="font-bold text-red-300">💡 重要なポイント：</span><br>
+            <div class="note-box">
+                <span class="note-title">💡 重要なポイント：</span><br>
                 落札するために大量のネズミを入札すると、その分「仕事が終わるまでのターン数（ネズミが拘束される時間）」が長くなってしまいます。計画的な入札がカギです！
             </div>
         </section>
 
-        <section class="bg-gray-800 p-6 rounded-xl pixel-border">
-            <h2 class="text-2xl font-bold text-purple-300 mb-4 border-b border-purple-300 inline-block">3. カードの種類</h2>
+        <section class="guide-section pixel-border">
+            <h2 class="section-title title-purple">3. カードの種類</h2>
             
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-4 bg-gray-700 p-3 rounded">
-                    <div class="card-demo pixel-border bg-[#f1c40f]" style="background-image: url('Card20.png');"></div>
+            <div class="card-list">
+                <div class="card-item">
+                    <div class="card-demo pixel-border" style="background-color: #f1c40f; background-image: url('Card20.png');"></div>
                     <div>
-                        <h3 class="font-bold text-xl text-yellow-400">仕事カード（数字）</h3>
-                        <p class="text-sm">完了時に振るサイコロの面数を表します。2〜20面体まで存在します。<br>大きい数字の仕事ほどハイリスク・ハイリターンです。</p>
+                        <h3 class="card-name-yellow">仕事カード（数字）</h3>
+                        <p class="card-info">完了時に振るサイコロの面数を表します。2〜20面体まで存在します。<br>大きい数字の仕事ほどハイリスク・ハイリターンです。</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4 bg-gray-700 p-3 rounded">
-                    <div class="card-demo pixel-border bg-[#9b59b6]" style="background-image: url('Card_Veto.png');"></div>
+                <div class="card-item">
+                    <div class="card-demo pixel-border" style="background-color: #9b59b6; background-image: url('Card_Veto.png');"></div>
                     <div>
-                        <h3 class="font-bold text-xl text-purple-400">却下（VETO）</h3>
-                        <p class="text-sm">落札すると能力としてストックされます。<br>自分が親（最初に入札する人）の時、場に出た仕事を強制的に「破棄（却下）」し、新しいカードを引き直すことができます。</p>
+                        <h3 class="card-name-purple">却下（VETO）</h3>
+                        <p class="card-info">落札すると能力としてストックされます。<br>自分が親（最初に入札する人）の時、場に出た仕事を強制的に「破棄（却下）」し、新しいカードを引き直すことができます。</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4 bg-gray-700 p-3 rounded">
-                    <div class="card-demo pixel-border bg-[#9b59b6]" style="background-image: url('Card_TheBigCheese.png');"></div>
+                <div class="card-item">
+                    <div class="card-demo pixel-border" style="background-color: #9b59b6; background-image: url('Card_TheBigCheese.png');"></div>
                     <div>
-                        <h3 class="font-bold text-xl text-purple-400">ビッグ・チーズ</h3>
-                        <p class="text-sm">落札すると能力としてストックされます。<br>自分の仕事が完了してサイコロを振った際、結果が気に入らなければ<strong>1度だけ振り直す</strong>ことができます。</p>
+                        <h3 class="card-name-purple">ビッグ・チーズ</h3>
+                        <p class="card-info">落札すると能力としてストックされます。<br>自分の仕事が完了してサイコロを振った際、結果が気に入らなければ<strong>1度だけ振り直す</strong>ことができます。</p>
                     </div>
                 </div>
             </div>
@@ -120,12 +334,13 @@
 
     </div>
 
-    <div class="mt-12 text-center pb-8">
-        <p class="text-gray-400 text-sm mb-4">※ブラウザの仕様によりボタンで閉じられない場合は、ブラウザのタブをそのまま閉じてください。</p>
-        <button onclick="window.close();" class="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-lg pixel-border font-bold text-xl inline-flex items-center gap-2">
+    <div class="page-footer">
+        <p class="footer-note">※ブラウザの仕様によりボタンで閉じられない場合は、ブラウザのタブをそのまま閉じてください。</p>
+        <button onclick="window.close();" class="btn-close large pixel-border">
             <span>✖</span> ゲーム画面に戻る
         </button>
     </div>
+</div>
 
 </body>
 </html>
