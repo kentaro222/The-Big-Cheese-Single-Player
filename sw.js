@@ -1,4 +1,4 @@
-const CACHE_NAME = 'big-cheese-v13'; 
+const CACHE_NAME = 'big-cheese-v14'; 
 
 const ASSETS_TO_CACHE = [
   'index.html',
