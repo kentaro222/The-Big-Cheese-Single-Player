@@ -9,86 +9,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Big Cheese - Single Player</title>
     <style>
-        /* =========================================
-           Reset & Base Styles
-           ========================================= */
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
-        
+        *, *::before, *::after { box-sizing: border-box; }
         body {
-            /* ↓ ここをシステムフォントの組み合わせに変更 ↓ */
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
-            
             background-color: #2c3e50;
             color: #ecf0f1;
             overflow-x: hidden;
-            
-            /* ※画像のドット絵（ネズミやカード）をくっきりさせる設定は残します */
-            image-rendering: pixelated; 
+            image-rendering: pixelated;
             margin: 0;
             padding: 0.5rem;
             font-size: 1rem;
             line-height: 1.5;
         }
-        @media (min-width: 640px) {
-            body { padding: 1rem; }
-        }
-
-        button {
-            cursor: pointer;
-            font-family: inherit;
-            border: none;
-            background: none;
-        }
-        
-        input {
-            font-family: inherit;
-            margin: 0;
-        }
-
+        @media (min-width: 640px) { body { padding: 1rem; } }
+        button { cursor: pointer; font-family: inherit; border: none; background: none; }
+        input { font-family: inherit; margin: 0; }
         h1, h2, p { margin: 0; }
-
-        /* =========================================
-           Layout & Components
-           ========================================= */
-        .container {
-            max-width: 72rem; /* 1152px */
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        .header h1 {
-            font-size: 1.875rem;
-            font-weight: bold;
-        }
-
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-        }
-        @media (min-width: 640px) {
-            .main-grid { gap: 1.5rem; }
-        }
+        .container { max-width: 72rem; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 1.5rem; }
+        .header h1 { font-size: 1.875rem; font-weight: bold; }
+        .main-grid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+        @media (min-width: 640px) { .main-grid { gap: 1.5rem; } }
         @media (min-width: 1024px) {
             .main-grid { grid-template-columns: repeat(3, 1fr); }
             .col-span-1 { grid-column: span 1 / span 1; }
             .col-span-2 { grid-column: span 2 / span 2; }
         }
-
         .flex-col { display: flex; flex-direction: column; }
         .items-center { align-items: center; }
-
-        /* Game Elements */
-        .pixel-border {
-            border: 4px solid #000;
-            box-shadow: 4px 4px 0px #000;
-        }
-
+        .pixel-border { border: 4px solid #000; box-shadow: 4px 4px 0px #000; }
         .card {
             width: 160px;
             height: 160px;
@@ -105,27 +54,12 @@
             transition: transform 0.2s;
             text-shadow: 1px 1px 0 rgba(255,255,255,0.7), -1px -1px 0 rgba(255,255,255,0.7), 1px -1px 0 rgba(255,255,255,0.7), -1px 1px 0 rgba(255,255,255,0.7);
         }
-
-        .card-wip {
-            width: 100px;
-            height: 100px;
-            background-color: #ecf0f1;
-            text-shadow: none;
-            padding: 0.25rem;
-            font-size: 0.875rem;
-        }
-
-        .text-bg-plate {
-            background: rgba(255, 255, 255, 0.8);
-            padding: 0 4px;
-            border-radius: 4px;
-        }
-
-        /* Mouse Animation */
+        .card-wip { width: 100px; height: 100px; background-color: #ecf0f1; text-shadow: none; padding: 0.25rem; font-size: 0.875rem; }
+        .text-bg-plate { background: rgba(255, 255, 255, 0.8); padding: 0 4px; border-radius: 4px; }
         .mouse-icon {
             width: 16px;
             height: 16px;
-            background-color: #95a5a6; 
+            background-color: #95a5a6;
             border-radius: 3px;
             display: inline-block;
             margin: 1px;
@@ -133,18 +67,8 @@
             background-repeat: no-repeat;
             background-position: left center;
         }
-
-        .mouse-icon.has-sprite {
-            background-color: transparent;
-            border: none;
-            background-size: 48px 16px;
-            background-position: 0 0;
-        }
-
-        .mouse-icon.walking {
-            animation: mouse-walk 0.6s step-end infinite;
-        }
-
+        .mouse-icon.has-sprite { background-color: transparent; border: none; background-size: 48px 16px; background-position: 0 0; }
+        .mouse-icon.walking { animation: mouse-walk 0.6s step-end infinite; }
         @keyframes mouse-walk {
             0% { background-position: 0 0; }
             25% { background-position: -16px 0; }
@@ -152,73 +76,21 @@
             75% { background-position: -32px 0; }
             100% { background-position: 0 0; }
         }
-
-        .score-mouse {
-            transform: scaleX(-2) scaleY(2);
-            transform-origin: bottom center;
-        }
-
-        /* Auction Area */
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-        
-        .auction-area {
-            background-color: #1f2937;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            width: 100%;
-            margin-bottom: 0.5rem;
-        }
-        
+        .score-mouse { transform: scaleX(-2) scaleY(2); transform-origin: bottom center; }
+        .section-title { font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .auction-area { background-color: #1f2937; padding: 1rem; border-radius: 0.75rem; width: 100%; margin-bottom: 0.5rem; }
         .card-value { font-size: 2.25rem; font-weight: 900; }
         .card-type { font-size: 0.875rem; margin-top: 0.25rem; display: block; }
-
-        .bid-controls {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            transition: opacity 0.2s;
-        }
-        
-        .bid-info {
-            background-color: rgba(0,0,0,0.3);
-            padding: 0.375rem;
-            border-radius: 0.25rem;
-            text-align: center;
-        }
+        .bid-controls { width: 100%; display: flex; flex-direction: column; gap: 0.5rem; transition: opacity 0.2s; }
+        .bid-info { background-color: rgba(0,0,0,0.3); padding: 0.375rem; border-radius: 0.25rem; text-align: center; }
         .bid-info-title { font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.125rem; }
         .bidder-name { font-weight: bold; font-size: 1rem; }
         .highest-bid-info { font-size: 0.875rem; color: #facc15; margin-top: 0.125rem; }
         .highest-bid-val { font-size: 1.125rem; }
         .highest-bidder-name { font-size: 0.75rem; color: #d1d5db; }
-
-        .bid-actions {
-            display: flex;
-            justify-content: center;
-            gap: 0.375rem;
-            flex-wrap: wrap;
-        }
-        .bid-input {
-            width: 4rem;
-            color: #000;
-            padding: 0.25rem;
-            font-size: 1rem;
-            border-radius: 0.25rem;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 0.25rem 0.75rem;
-            font-size: 1rem;
-            border-radius: 0.25rem;
-            font-weight: bold;
-            color: white;
-            display: inline-block;
-        }
+        .bid-actions { display: flex; justify-content: center; gap: 0.375rem; flex-wrap: wrap; }
+        .bid-input { width: 4rem; color: #000; padding: 0.25rem; font-size: 1rem; border-radius: 0.25rem; }
+        .btn { padding: 0.25rem 0.75rem; font-size: 1rem; border-radius: 0.25rem; font-weight: bold; color: white; display: inline-block; }
         .btn-green { background-color: #16a34a; }
         .btn-green:hover { background-color: #22c55e; }
         .btn-red { background-color: #dc2626; }
@@ -231,150 +103,34 @@
         .btn-blue:hover { background-color: #3b82f6; }
         .btn-gray { background-color: #9ca3af; padding: 0.5rem 1rem; }
         .btn-gray:hover { background-color: #6b7280; }
-
-        /* Log */
-        .log-box {
-    height: 120px;     /* 高さを広げて見やすく */
-    overflow-y: auto;
-    background: rgba(0,0,0,0.7);
-    padding: 12px;     /* 文字に合わせて余白も少し広げる */
-    font-size: 1.1rem; /* 文字を大きく（1.2rem は元の約1.3倍の大きさです） */
-    border: 2px solid #000;
-    border-radius: 0.25rem;
-    width: 100%;
-}
-
-        /* Player List */
-        .player-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-        }
-        @media (min-width: 768px) {
-            .player-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        .player-card {
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.2s;
-            opacity: 0.9;
-        }
-        .player-card.is-active {
-            box-shadow: 0 0 0 2px white;
-            transform: scale(1.02);
-            z-index: 20;
-            opacity: 1;
-        }
-
-        .player-header {
-            display: flex;
-            flex-direction: column;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            padding-bottom: 0.25rem;
-            margin-bottom: 0.25rem;
-        }
+        .log-box { height: 120px; overflow-y: auto; background: rgba(0,0,0,0.7); padding: 12px; font-size: 1.1rem; border: 2px solid #000; border-radius: 0.25rem; width: 100%; }
+        .player-grid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+        @media (min-width: 768px) { .player-grid { grid-template-columns: repeat(2, 1fr); } }
+        .player-card { padding: 0.5rem; border-radius: 0.5rem; display: flex; flex-direction: column; transition: all 0.2s; opacity: 0.9; }
+        .player-card.is-active { box-shadow: 0 0 0 2px white; transform: scale(1.02); z-index: 20; opacity: 1; }
+        .player-header { display: flex; flex-direction: column; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 0.25rem; margin-bottom: 0.25rem; }
         .player-name-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.125rem; }
         .player-name { font-weight: bold; font-size: 1.125rem; display: flex; align-items: center; }
         .player-score { font-size: 1.25rem; font-weight: 900; }
         .player-score-max { font-size: 0.75rem; color: #9ca3af; font-weight: normal; }
-
-        .parent-tag {
-            background: #e67e22;
-            color: white;
-            padding: 1px 4px;
-            font-size: 12px;
-            border-radius: 3px;
-            border: 1px solid #000;
-            margin-right: 4px;
-        }
-
-        .progress-bar {
-            position: relative;
-            width: 100%;
-            height: 2rem;
-            margin-top: 0.5rem;
-            border-bottom: 2px dashed #6b7280;
-            background-color: rgba(44, 62, 80, 0.3);
-            border-radius: 0.125rem 0.125rem 0 0;
-        }
+        .parent-tag { background: #e67e22; color: white; padding: 1px 4px; font-size: 12px; border-radius: 3px; border: 1px solid #000; margin-right: 4px; }
+        .progress-bar { position: relative; width: 100%; height: 2rem; margin-top: 0.5rem; border-bottom: 2px dashed #6b7280; background-color: rgba(44, 62, 80, 0.3); border-radius: 0.125rem 0.125rem 0 0; }
         .progress-goal { position: absolute; right: 0; bottom: 0; font-size: 10px; color: #9ca3af; font-weight: bold; padding-right: 0.25rem; }
         .progress-cursor { position: absolute; bottom: 0; transition: left 0.5s ease-out; display: flex; flex-direction: column; align-items: center; z-index: 10; }
         .progress-line { width: 1rem; height: 4px; margin-top: 1px; border-radius: 9999px; margin-bottom: 1px; }
-
         .inventory-row { font-size: 0.75rem; color: #d1d5db; margin-top: 0.25rem; text-align: right; min-height: 14px; }
         .inv-item { background-color: #7e22ce; color: white; padding: 0 0.25rem; border-radius: 0.25rem; margin-right: 0.25rem; }
-
         .mice-row { margin-bottom: 0.25rem; font-size: 0.875rem; }
         .mice-container { display: flex; flex-wrap: wrap; margin-top: 0.125rem; }
-
-        .wip-row {
-            display: flex;
-            gap: 0.25rem;
-            overflow-x: auto;
-            padding: 0.25rem;
-            background-color: rgba(0,0,0,0.3);
-            border-radius: 0.25rem;
-            min-height: 60px;
-        }
+        .wip-row { display: flex; gap: 0.25rem; overflow-x: auto; padding: 0.25rem; background-color: rgba(0,0,0,0.3); border-radius: 0.25rem; min-height: 60px; }
         .wip-empty { color: #9ca3af; font-size: 0.75rem; align-self: center; width: 100%; text-align: center; }
-
-        /* Footer */
-        .footer {
-            margin-top: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            border-top: 1px solid #4b5563;
-            padding-top: 1rem;
-            padding-bottom: 2rem;
-        }
-        .footer-link {
-            font-size: 0.875rem;
-            color: #9ca3af;
-            text-decoration: underline;
-            text-decoration-color: #6b7280;
-            transition: color 0.2s;
-        }
+        .footer { margin-top: 2rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; border-top: 1px solid #4b5563; padding-top: 1rem; padding-bottom: 2rem; }
+        .footer-link { font-size: 0.875rem; color: #9ca3af; text-decoration: underline; text-decoration-color: #6b7280; transition: color 0.2s; }
         .footer-link:hover { color: #e5e7eb; }
-        .guide-btn {
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 9999px;
-            border: 1px solid #9ca3af;
-            color: #9ca3af;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: bold;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
+        .guide-btn { width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 1px solid #9ca3af; color: #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; transition: all 0.2s; text-decoration: none; }
         .guide-btn:hover { background-color: #9ca3af; color: #2c3e50; }
-
-        /* Modals */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-        }
-        .modal-content {
-            background-color: white;
-            color: black;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            text-align: center;
-            max-width: 24rem;
-            width: 90%;
-        }
+        .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 50; }
+        .modal-content { background-color: white; color: black; padding: 1.5rem; border-radius: 0.75rem; text-align: center; max-width: 24rem; width: 90%; }
         .modal-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; }
         .modal-title-red { color: #dc2626; }
         .modal-desc { font-size: 1rem; margin-bottom: 1.5rem; font-weight: bold; color: #374151; }
@@ -383,8 +139,6 @@
         .modal-dice.small-text { font-size: 1.875rem; }
         .modal-reroll { margin-bottom: 1rem; }
         .modal-actions { display: flex; justify-content: center; gap: 1rem; }
-
-        /* Utilities */
         .hidden { display: none !important; }
         .disabled-ui { pointer-events: none; opacity: 0.5; }
         .text-gray-400 { color: #9ca3af; }
@@ -395,37 +149,15 @@
         .text-purple-400 { color: #c084fc; }
         .text-green-400 { color: #4ade80; }
         .font-bold { font-weight: bold; }
-
-        /* Pop Animation */
         .pop { animation: pop 0.3s ease-out; }
-        @keyframes pop {
-            0% { transform: scale(0.8); }
-            100% { transform: scale(1); }
-        }
-        
-        .toast-msg {
-            position: fixed;
-            top: 5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #dc2626;
-            color: white;
-            padding: 1rem;
-            border-radius: 0.25rem;
-            z-index: 100;
-            font-weight: bold;
-            font-size: 1.125rem;
-            text-align: center;
-        }
+        @keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
+        .toast-msg { position: fixed; top: 5rem; left: 50%; transform: translateX(-50%); background-color: #dc2626; color: white; padding: 1rem; border-radius: 0.25rem; z-index: 100; font-weight: bold; font-size: 1.125rem; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="app" class="container">
-    <div class="header">
-        <h1>The Big Cheese</h1>
-    </div>
-
+    <div class="header"><h1>The Big Cheese</h1></div>
     <div class="main-grid">
         <div class="col-span-1 flex-col items-center">
             <h2 class="section-title">現在の競り</h2>
@@ -434,7 +166,6 @@
                     <span class="card-value" id="cardValue">?</span>
                     <span class="card-type" id="cardType">仕事</span>
                 </div>
-                
                 <div id="bidControls" class="bid-controls">
                     <div class="bid-info">
                         <div class="bid-info-title">現在の順番</div>
@@ -443,17 +174,14 @@
                         <div id="highestBidderName" class="highest-bidder-name">(なし)</div>
                     </div>
                     <div class="bid-actions">
-                        <input type="number" id="bidAmount" class="bid-input pixel-border" value="1" min="1">
-                        <button onclick="game.placeBid()" class="btn btn-green pixel-border">入札</button>
+                        <input type="number" id="bidAmount" class="bid-input pixel-border" value="1" min="1" step="1" aria-label="入札する部下数">
+                        <button onclick="game.placeBidFromInput()" class="btn btn-green pixel-border">入札</button>
                         <button onclick="game.passBid()" class="btn btn-red pixel-border">パス</button>
                         <button id="vetoBtn" onclick="game.useVeto()" class="hidden btn btn-purple pixel-border">却下(VETO)</button>
                     </div>
                 </div>
             </div>
-            
-            <div class="log-box pixel-border" id="gameLog">
-                <div class="text-gray-400">> ゲームを開始しました。</div>
-            </div>
+            <div class="log-box pixel-border" id="gameLog"><div class="text-gray-400">> ゲームを開始しました。</div></div>
         </div>
 
         <div class="col-span-2">
@@ -465,7 +193,6 @@
     <div class="footer">
         <button onclick="confirmReset()" class="footer-link">進行状態をリセットして最初から遊ぶ</button>
         <a href="bigcheese_guide.html" class="guide-btn" title="プレイガイドを開く">?</a>
-
     </div>
 </div>
 
@@ -475,9 +202,7 @@
         <div id="diceTypeDisplay" class="modal-dice-type hidden"></div>
         <div id="diceDisplay" class="modal-dice">?</div>
         <div id="rerollArea" class="modal-reroll hidden">
-            <button onclick="game.useBigCheese()" class="btn btn-yellow pixel-border">
-                ビッグ・チーズで振り直す！
-            </button>
+            <button onclick="game.useBigCheese()" class="btn btn-yellow pixel-border">ビッグ・チーズで振り直す！</button>
         </div>
         <button id="modalOkBtn" onclick="game.closeModal()" class="btn btn-blue pixel-border">OK</button>
     </div>
@@ -510,6 +235,9 @@ function executeReset() {
 
 const PLAYER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22'];
 const WIN_SCORE = 40;
+const SAVE_KEY = 'bigCheeseSave';
+const SAVE_VERSION = 2;
+
 const CARD_TYPES = {
     NORMAL: 'NORMAL',
     VETO: 'VETO',
@@ -520,29 +248,44 @@ class Game {
     constructor() {
         this.players = [];
         this.deck = [];
+        this.discardPile = [];
         this.currentCard = null;
-        this.parentIdx = 0; 
-        this.auction = {
-            highestBid: 0,
-            highestBidder: null,
-            activePlayerIdx: 0,
-            participants: [] 
-        };
+        this.parentIdx = 0;
+        this.auction = this.createEmptyAuction();
         this.log = document.getElementById('gameLog');
         this.cpuTimer = null;
+        this.modalResolve = null;
+        this.activeJob = null;
+        this.lastDiceResult = null;
         this.init();
+    }
+
+    createEmptyAuction() {
+        return {
+            highestBid: 0,
+            highestBidderId: null,
+            activePlayerIdx: 0,
+            participants: []
+        };
     }
 
     init() {
         if (this.loadState()) {
-            this.updateUI();
-            return; 
+            if (this.currentCard) {
+                this.updateUI();
+            } else {
+                document.getElementById('bidControls').classList.add('disabled-ui');
+                this.renderPlayers();
+                setTimeout(() => this.checkCompletedJobs(), 0);
+            }
+            return;
         }
 
+        this.players = [];
         for (let i = 0; i < 5; i++) {
             this.players.push({
                 id: i,
-                name: i === 0 ? "あなた" : `CPU ${i}`,
+                name: i === 0 ? 'あなた' : `CPU ${i}`,
                 isCPU: i !== 0,
                 color: PLAYER_COLORS[i],
                 mice: 10,
@@ -552,53 +295,121 @@ class Game {
             });
         }
 
-        const diceValues = [2, 4, 6, 8, 10, 12, 20];
-        diceValues.forEach(v => {
-            for(let i=0; i<4; i++) this.deck.push({ type: CARD_TYPES.NORMAL, value: v });
-        });
-        for(let i=0; i<4; i++) this.deck.push({ type: CARD_TYPES.VETO, value: 0 });
-        for(let i=0; i<4; i++) this.deck.push({ type: CARD_TYPES.BIG_CHEESE, value: 0 });
-        
+        this.deck = this.createFullDeck();
+        this.discardPile = [];
         this.shuffle(this.deck);
         this.parentIdx = Math.floor(Math.random() * this.players.length);
-        
         this.startNewRound();
+    }
+
+    createFullDeck() {
+        const deck = [];
+        const diceValues = [2, 4, 6, 8, 10, 12, 20];
+
+        diceValues.forEach(v => {
+            for (let i = 0; i < 4; i++) {
+                deck.push({ type: CARD_TYPES.NORMAL, value: v });
+            }
+        });
+
+        for (let i = 0; i < 4; i++) {
+            deck.push({ type: CARD_TYPES.VETO, value: 0 });
+            deck.push({ type: CARD_TYPES.BIG_CHEESE, value: 0 });
+        }
+
+        return deck;
+    }
+
+    sameCard(a, b) {
+        return !!a && !!b && a.type === b.type && Number(a.value || 0) === Number(b.value || 0);
+    }
+
+    rebuildDiscardPileFromLegacyState(state) {
+        const pool = this.createFullDeck();
+
+        const removeOne = card => {
+            if (!card) return;
+            const idx = pool.findIndex(c => this.sameCard(c, card));
+            if (idx >= 0) pool.splice(idx, 1);
+        };
+
+        (state.deck || []).forEach(removeOne);
+        removeOne(state.currentCard);
+
+        (state.players || []).forEach(player => {
+            (player.wip || []).forEach(job => removeOne(job.card));
+            (player.inventory || []).forEach(removeOne);
+        });
+
+        return pool;
     }
 
     saveState() {
         if (this.players.some(p => p.score >= WIN_SCORE)) return;
 
         const state = {
+            version: SAVE_VERSION,
             players: this.players,
             deck: this.deck,
+            discardPile: this.discardPile,
             currentCard: this.currentCard,
             parentIdx: this.parentIdx,
             auction: this.auction,
             logHtml: this.log.innerHTML
         };
-        localStorage.setItem('bigCheeseSave', JSON.stringify(state));
+
+        localStorage.setItem(SAVE_KEY, JSON.stringify(state));
     }
 
     loadState() {
-        const saved = localStorage.getItem('bigCheeseSave');
-        if (saved) {
-            try {
-                const state = JSON.parse(saved);
-                this.players = state.players;
-                this.deck = state.deck;
-                this.currentCard = state.currentCard;
-                this.parentIdx = state.parentIdx;
-                this.auction = state.auction;
-                if (state.logHtml) {
-                    this.log.innerHTML = state.logHtml;
-                }
-                this.addLog("進行状態を復元し、再開しました。", "system");
-                return true;
-            } catch(e) {
-                console.error("セーブデータの読み込みに失敗しました:", e);
+        const saved = localStorage.getItem(SAVE_KEY);
+        if (!saved) return false;
+
+        try {
+            const state = JSON.parse(saved);
+
+            if (!Array.isArray(state.players) || !Array.isArray(state.deck) || !state.auction) {
+                throw new Error('Invalid save data');
             }
+
+            this.players = state.players;
+            this.deck = state.deck;
+            this.currentCard = state.currentCard || null;
+            this.parentIdx = Number.isInteger(state.parentIdx) ? state.parentIdx : 0;
+
+            const legacyHighestBidderId = state.auction.highestBidder && Number.isInteger(state.auction.highestBidder.id)
+                ? state.auction.highestBidder.id
+                : null;
+
+            this.auction = {
+                highestBid: Number.isFinite(Number(state.auction.highestBid)) ? Number(state.auction.highestBid) : 0,
+                highestBidderId: Number.isInteger(state.auction.highestBidderId)
+                    ? state.auction.highestBidderId
+                    : legacyHighestBidderId,
+                activePlayerIdx: Number.isInteger(state.auction.activePlayerIdx) ? state.auction.activePlayerIdx : 0,
+                participants: Array.isArray(state.auction.participants)
+                    ? state.auction.participants.filter(id => Number.isInteger(id) && this.players[id])
+                    : this.players.map((_, i) => i)
+            };
+
+            this.discardPile = Array.isArray(state.discardPile)
+                ? state.discardPile
+                : this.rebuildDiscardPileFromLegacyState(state);
+
+            if (state.logHtml) this.log.innerHTML = state.logHtml;
+
+            this.addLog(
+                state.version === SAVE_VERSION
+                    ? '進行状態を復元し、再開しました。'
+                    : '旧セーブデータを変換して再開しました。',
+                'system'
+            );
+            return true;
+        } catch (e) {
+            console.error('セーブデータの読み込みに失敗しました:', e);
+            localStorage.removeItem(SAVE_KEY);
+            return false;
         }
-        return false;
     }
 
     shuffle(array) {
@@ -608,38 +419,54 @@ class Game {
         }
     }
 
+    recycleDiscardPileIfNeeded() {
+        if (this.deck.length > 0) return true;
+
+        if (this.discardPile.length === 0) {
+            this.addLog('山札にも捨て札にもカードがありません。', 'system');
+            return false;
+        }
+
+        const count = this.discardPile.length;
+        this.deck = this.discardPile.splice(0);
+        this.shuffle(this.deck);
+        this.addLog(`捨て札 ${count} 枚をシャッフルして山札に戻しました。`, 'system');
+        return true;
+    }
+
+    discardCard(card) {
+        if (card) this.discardPile.push(card);
+    }
+
     startNewRound() {
-        clearTimeout(this.cpuTimer); 
-        
-        if (this.deck.length === 0) {
-            this.addLog("山札を再作成します。", "system");
-            const diceValues = [2, 4, 6, 8, 10, 12, 20];
-            diceValues.forEach(v => {
-                for(let i=0; i<2; i++) this.deck.push({ type: CARD_TYPES.NORMAL, value: v });
-            });
-            this.shuffle(this.deck);
+        clearTimeout(this.cpuTimer);
+        this.cpuTimer = null;
+
+        if (!this.recycleDiscardPileIfNeeded()) {
+            this.updateUI();
+            return;
         }
 
         this.currentCard = this.deck.pop();
-        
         this.auction = {
             highestBid: 0,
-            highestBidder: null,
+            highestBidderId: null,
             activePlayerIdx: this.parentIdx,
             participants: this.players.map((_, i) => i)
         };
 
-        this.addLog(`親: ${this.players[this.parentIdx].name}。競り開始。`, "system");
-        this.updateUI(); 
+        this.addLog(`親: ${this.players[this.parentIdx].name}。競り開始。`, 'system');
+        this.updateUI();
     }
 
     getCardName(card) {
         if (card.type === CARD_TYPES.NORMAL) return `${card.value}面体`;
-        if (card.type === CARD_TYPES.VETO) return `却下(VETO)`;
-        return `ビッグ・チーズ`;
+        if (card.type === CARD_TYPES.VETO) return '却下(VETO)';
+        return 'ビッグ・チーズ';
     }
 
     getCardImageUrl(card) {
+        if (!card) return '';
         if (card.type === CARD_TYPES.NORMAL) {
             if (card.value === 2) return 'Card_2.png';
             if (card.value === 4) return 'Card_4.png';
@@ -651,26 +478,41 @@ class Game {
         }
         if (card.type === CARD_TYPES.VETO) return 'Card_Veto.png';
         if (card.type === CARD_TYPES.BIG_CHEESE) return 'Card_TheBigCheese.png';
-        return ""; 
+        return '';
     }
 
     getMouseImageUrl() {
-        return "Mouse_sheet.png";
+        return 'Mouse_sheet.png';
     }
 
     updateUI() {
         const cardValEl = document.getElementById('cardValue');
         const cardTypeEl = document.getElementById('cardType');
         const cardObj = document.getElementById('currentCard');
-        
+        const bidControls = document.getElementById('bidControls');
+        const vetoBtn = document.getElementById('vetoBtn');
+
+        if (!this.currentCard) {
+            cardObj.style.backgroundImage = 'none';
+            cardObj.style.backgroundColor = '#6b7280';
+            cardValEl.style.display = 'block';
+            cardTypeEl.style.display = 'block';
+            cardValEl.innerText = '…';
+            cardTypeEl.innerText = '処理中';
+            bidControls.classList.add('disabled-ui');
+            vetoBtn.classList.add('hidden');
+            this.renderPlayers();
+            return;
+        }
+
         if (this.currentCard.type === CARD_TYPES.NORMAL) {
             cardValEl.innerText = this.currentCard.value;
-            cardTypeEl.innerText = "仕事";
-            cardObj.style.backgroundColor = "#f1c40f";
+            cardTypeEl.innerText = '仕事';
+            cardObj.style.backgroundColor = '#f1c40f';
         } else {
-            cardValEl.innerText = this.currentCard.type === CARD_TYPES.VETO ? "V" : "B";
-            cardTypeEl.innerText = "特殊";
-            cardObj.style.backgroundColor = "#9b59b6";
+            cardValEl.innerText = this.currentCard.type === CARD_TYPES.VETO ? 'V' : 'B';
+            cardTypeEl.innerText = '特殊';
+            cardObj.style.backgroundColor = '#9b59b6';
         }
 
         const imgUrl = this.getCardImageUrl(this.currentCard);
@@ -679,29 +521,28 @@ class Game {
             cardValEl.style.display = 'none';
             cardTypeEl.style.display = 'none';
         } else {
-            cardObj.style.backgroundImage = "none";
+            cardObj.style.backgroundImage = 'none';
             cardValEl.style.display = 'block';
             cardTypeEl.style.display = 'block';
         }
 
         const activePlayer = this.players[this.auction.activePlayerIdx];
+        const highestBidder = this.auction.highestBidderId !== null
+            ? this.players[this.auction.highestBidderId]
+            : null;
+
         document.getElementById('currentBidderName').innerText = activePlayer.name;
         document.getElementById('currentBidderName').style.color = activePlayer.color;
         document.getElementById('highestBid').innerText = this.auction.highestBid;
-        document.getElementById('highestBidderName').innerText = this.auction.highestBidder ? `(${this.auction.highestBidder.name})` : "(なし)";
-        
-        document.getElementById('bidAmount').min = this.auction.highestBid + 1;
-        document.getElementById('bidAmount').value = this.auction.highestBid + 1;
+        document.getElementById('highestBidderName').innerText = highestBidder ? `(${highestBidder.name})` : '(なし)';
+
+        const bidInput = document.getElementById('bidAmount');
+        bidInput.min = this.auction.highestBid + 1;
+        bidInput.value = this.auction.highestBid + 1;
 
         const hasVeto = activePlayer.inventory.some(c => c.type === CARD_TYPES.VETO);
-        const vetoBtn = document.getElementById('vetoBtn');
-        if(hasVeto) {
-            vetoBtn.classList.remove('hidden');
-        } else {
-            vetoBtn.classList.add('hidden');
-        }
-
-        const bidControls = document.getElementById('bidControls');
+        if (hasVeto) vetoBtn.classList.remove('hidden');
+        else vetoBtn.classList.add('hidden');
 
         if (activePlayer.isCPU) {
             bidControls.classList.add('disabled-ui');
@@ -722,82 +563,80 @@ class Game {
 
     getExpectedScore(card) {
         if (!card || card.type !== CARD_TYPES.NORMAL) return 0;
-        if (card.value === 2) return 1.5;
         return (card.value + 1) / 2;
+    }
+
+    getProjectedScore(player) {
+        let expectedWip = 0;
+        player.wip.forEach(job => {
+            expectedWip += this.getExpectedScore(job.card);
+        });
+        return player.score + expectedWip;
     }
 
     processCPUTurn() {
         this.cpuTimer = null;
+        if (!this.currentCard) return;
+
         const cpu = this.players[this.auction.activePlayerIdx];
         const requiredBid = this.auction.highestBid + 1;
         const currentCard = this.currentCard;
 
-        const virtualScores = this.players.map(p => {
-            let wipSum = 0;
-            p.wip.forEach(job => {
-                wipSum += this.getExpectedScore(job.card);
-            });
-            return { id: p.id, vScore: p.score + wipSum, mice: p.mice };
-        });
+        const virtualScores = this.players.map(p => ({
+            id: p.id,
+            vScore: this.getProjectedScore(p),
+            mice: p.mice
+        }));
 
         const myVirtualScore = virtualScores.find(v => v.id === cpu.id).vScore;
         const currentExpected = this.getExpectedScore(currentCard);
 
         let someoneWillWin = false;
         let winningPlayerId = -1;
-        for (let vs of virtualScores) {
-            if (vs.id !== cpu.id) {
-                if (vs.vScore + currentExpected >= WIN_SCORE) {
-                    someoneWillWin = true;
-                    winningPlayerId = vs.id;
-                    break;
-                }
+        for (const vs of virtualScores) {
+            if (vs.id !== cpu.id && vs.vScore + currentExpected >= WIN_SCORE) {
+                someoneWillWin = true;
+                winningPlayerId = vs.id;
+                break;
             }
         }
 
-        const iWillWin = (myVirtualScore + currentExpected >= WIN_SCORE);
-
+        const iWillWin = myVirtualScore + currentExpected >= WIN_SCORE;
         const hasBigCheese = cpu.inventory.some(c => c.type === CARD_TYPES.BIG_CHEESE);
         const hasVeto = cpu.inventory.some(c => c.type === CARD_TYPES.VETO);
 
         let maxBid = 0;
-        let isDesperateMode = false;
 
         if (currentCard.type === CARD_TYPES.NORMAL) {
             maxBid = Math.ceil(currentExpected);
 
-            if (cpu.mice <= 4 && currentCard.value <= 6) {
-                maxBid = cpu.mice; 
-                isDesperateMode = true;
-            } else {
-                if (cpu.mice >= 8) maxBid += 1;
-                if (currentCard.value <= 6) maxBid += 1; 
+            if (cpu.mice >= 8 && currentCard.value >= 8) maxBid += 1;
+            if (hasBigCheese && currentCard.value >= 12) maxBid += 1;
+            if (currentCard.value >= 12 && !hasBigCheese && cpu.mice <= 5) maxBid -= 2;
+
+            maxBid += Math.floor(Math.random() * 3) - 1;
+
+            if (currentCard.value === 2) maxBid = Math.min(maxBid, 2);
+            if (currentCard.value === 4) maxBid = Math.min(maxBid, 3);
+            if (currentCard.value === 6) maxBid = Math.min(maxBid, 4);
+
+            if (cpu.mice <= 4 && !iWillWin && !someoneWillWin) {
+                maxBid = Math.min(maxBid, Math.max(1, cpu.mice - 1));
             }
 
-            if (hasBigCheese && currentCard.value >= 12) maxBid += Math.floor(Math.random() * 3) + 2;
-            if (currentCard.value >= 12 && !hasBigCheese && cpu.mice <= 5) maxBid -= 2; 
-
-            const mood = Math.floor(Math.random() * 3) - 1; 
-            maxBid += mood;
-
-            if (currentCard.value === 2 && maxBid > 3) maxBid = 3;
-            if (currentCard.value === 4 && maxBid > 4) maxBid = 4;
-            if (currentCard.value === 6 && maxBid > 5) maxBid = 5;
-
             if (iWillWin) {
-                maxBid = cpu.mice; 
-                isDesperateMode = false;
+                const finishBid = Math.ceil(currentExpected) + 2;
+                maxBid = Math.max(maxBid, Math.min(cpu.mice, finishBid));
             } else if (someoneWillWin) {
-                maxBid = cpu.mice; 
-                isDesperateMode = false;
+                const blockBid = Math.ceil(currentExpected) + 1;
+                maxBid = Math.max(maxBid, Math.min(cpu.mice, blockBid));
             }
 
         } else if (currentCard.type === CARD_TYPES.VETO) {
             if (hasVeto) {
-                maxBid = 1; 
-                if (cpu.mice >= 8) maxBid += 1; 
+                maxBid = cpu.mice >= 8 ? 2 : 1;
             } else {
-                maxBid = 2; 
+                maxBid = 2;
                 if (cpu.mice >= 7) maxBid += 1;
                 if (virtualScores.some(v => v.vScore >= 30)) maxBid += 1;
                 maxBid += Math.floor(Math.random() * 2);
@@ -805,8 +644,7 @@ class Game {
 
         } else if (currentCard.type === CARD_TYPES.BIG_CHEESE) {
             if (hasBigCheese) {
-                maxBid = 1;
-                if (cpu.mice >= 8) maxBid += 1;
+                maxBid = cpu.mice >= 8 ? 2 : 1;
             } else {
                 maxBid = 2;
                 if (cpu.mice >= 7) maxBid += 1;
@@ -815,44 +653,61 @@ class Game {
 
             let maxRivalBigJobTurns = 0;
             this.auction.participants.forEach(pid => {
-                if (pid !== cpu.id) {
-                    const rival = this.players[pid];
-                    rival.wip.forEach(job => {
-                        if (job.card.type === CARD_TYPES.NORMAL && job.card.value >= 10) {
-                            if (job.miceOnCard > maxRivalBigJobTurns) {
-                                maxRivalBigJobTurns = job.miceOnCard;
-                            }
-                        }
-                    });
-                }
+                if (pid === cpu.id) return;
+                const rival = this.players[pid];
+                rival.wip.forEach(job => {
+                    if (job.card.type === CARD_TYPES.NORMAL && job.card.value >= 10) {
+                        maxRivalBigJobTurns = Math.max(maxRivalBigJobTurns, job.miceOnCard);
+                    }
+                });
             });
 
             if (maxRivalBigJobTurns > 0) {
-                const blockBid = maxRivalBigJobTurns;
-                if (maxBid < blockBid) {
-                    maxBid = blockBid;
-                    if (maxBid > cpu.mice - 2) maxBid = cpu.mice - 2; 
-                }
+                const blockBid = Math.min(maxRivalBigJobTurns, Math.max(1, cpu.mice - 2));
+                maxBid = Math.max(maxBid, blockBid);
             }
         }
 
         if (maxBid < 1) maxBid = 1;
         if (maxBid > cpu.mice) maxBid = cpu.mice;
 
-        if (hasVeto && currentCard.type === CARD_TYPES.NORMAL) {
-            if (someoneWillWin) {
-                const topBidder = this.auction.highestBidder;
-                if (topBidder && topBidder.id === winningPlayerId) {
-                    if (requiredBid > cpu.mice || requiredBid > maxBid || Math.random() < 0.8) {
+        if (hasVeto) {
+            const topBidder = this.auction.highestBidderId !== null
+                ? this.players[this.auction.highestBidderId]
+                : null;
+
+            if (topBidder && topBidder.id !== cpu.id) {
+                const topProjectedScore = this.getProjectedScore(topBidder);
+
+                if (currentCard.type === CARD_TYPES.NORMAL) {
+                    if (someoneWillWin && topBidder.id === winningPlayerId) {
+                        if (requiredBid > cpu.mice || requiredBid > maxBid || Math.random() < 0.7) {
+                            this.useVeto();
+                            return;
+                        }
+                    }
+
+                    if (requiredBid > cpu.mice && currentExpected >= 3.5 && this.auction.highestBid <= 2 && Math.random() < 0.25) {
                         this.useVeto();
                         return;
                     }
                 }
-            }
-            if (requiredBid > cpu.mice && currentExpected >= 3.5 && this.auction.highestBid <= 2) {
-                if (Math.random() < 0.3) { 
-                    this.useVeto();
-                    return;
+
+                if (currentCard.type === CARD_TYPES.BIG_CHEESE) {
+                    const rivalHasBigJob = topBidder.wip.some(job =>
+                        job.card.type === CARD_TYPES.NORMAL && job.card.value >= 10
+                    );
+                    if (topProjectedScore >= 32 && rivalHasBigJob && (requiredBid > maxBid || Math.random() < 0.3)) {
+                        this.useVeto();
+                        return;
+                    }
+                }
+
+                if (currentCard.type === CARD_TYPES.VETO) {
+                    if (topProjectedScore >= 35 && (requiredBid > maxBid || Math.random() < 0.2)) {
+                        this.useVeto();
+                        return;
+                    }
                 }
             }
         }
@@ -864,26 +719,22 @@ class Game {
 
         if (requiredBid <= maxBid) {
             let bidAmount = requiredBid;
-            
-            if (isDesperateMode && maxBid === cpu.mice && cpu.mice >= requiredBid) {
-                bidAmount = cpu.mice;
-            } else if (!someoneWillWin && !iWillWin && maxBid >= requiredBid + 2 && cpu.mice >= requiredBid + 3 && Math.random() < 0.2) {
+
+            if (!someoneWillWin && !iWillWin && maxBid >= requiredBid + 2 && cpu.mice >= requiredBid + 3 && Math.random() < 0.15) {
                 const maxJump = Math.min(2, maxBid - requiredBid);
-                const jump = Math.floor(Math.random() * maxJump) + 1;
-                bidAmount = requiredBid + jump;
+                bidAmount = requiredBid + Math.floor(Math.random() * maxJump) + 1;
             }
 
-            document.getElementById('bidAmount').value = bidAmount;
-            this.placeBid();
+            this.placeBid(bidAmount);
         } else {
-            this.passBid(); 
+            this.passBid();
         }
     }
 
     renderPlayers() {
         const list = document.getElementById('playerList');
         list.innerHTML = '';
-        
+
         const mouseImgUrl = this.getMouseImageUrl();
         const mouseClass = mouseImgUrl ? 'mouse-icon has-sprite' : 'mouse-icon';
         const mouseStyle = mouseImgUrl ? `background-image: url('${mouseImgUrl}');` : '';
@@ -891,26 +742,27 @@ class Game {
         this.players.forEach(p => {
             const isParent = this.parentIdx === p.id;
             const card = document.createElement('div');
-            
-            card.className = `player-card pixel-border ${this.auction.activePlayerIdx === p.id ? 'is-active' : ''}`;
+            card.className = `player-card pixel-border ${this.auction.activePlayerIdx === p.id && this.currentCard ? 'is-active' : ''}`;
             card.style.backgroundColor = p.color + '44';
-            
+
             let miceHtml = '';
-            for(let i=0; i<p.mice; i++) miceHtml += `<div class="${mouseClass}" style="${mouseStyle}"></div>`;
+            for (let i = 0; i < p.mice; i++) {
+                miceHtml += `<div class="${mouseClass}" style="${mouseStyle}"></div>`;
+            }
 
             let wipHtml = '';
-            p.wip.forEach((job) => {
+            p.wip.forEach(job => {
                 const imgUrl = this.getCardImageUrl(job.card);
-                const bgStyle = imgUrl ? `background-image: url('${imgUrl}'); background-color: transparent;` : ``;
-                const textStyle = imgUrl ? `display: none;` : ``;
+                const bgStyle = imgUrl ? `background-image: url('${imgUrl}'); background-color: transparent;` : '';
+                const textStyle = imgUrl ? 'display: none;' : '';
 
                 wipHtml += `
                     <div class="card card-wip pixel-border" style="${bgStyle}">
                         <b style="font-size: 0.75rem; ${textStyle}">${this.getCardName(job.card)}</b>
                         <div class="mice-container z-10" style="justify-content: center;">
-                            ${Array(job.miceOnCard).fill(`<div class="${mouseClass} walking" style="transform: scale(0.75); ${mouseStyle}"></div>`).join('')}
+                            ${Array(Math.max(0, job.miceOnCard)).fill(`<div class="${mouseClass} walking" style="transform: scale(0.75); ${mouseStyle}"></div>`).join('')}
                         </div>
-                        <span class="z-10 ${imgUrl ? 'text-bg-plate' : ''}" style="margin-top: 0.25rem; font-weight: bold; font-size: 10px;">残り ${job.miceOnCard}</span>
+                        <span class="z-10 ${imgUrl ? 'text-bg-plate' : ''}" style="margin-top: 0.25rem; font-weight: bold; font-size: 10px;">残り ${Math.max(0, job.miceOnCard)}</span>
                     </div>
                 `;
             });
@@ -941,40 +793,61 @@ class Game {
                     <div class="inventory-row">${invHtml ? '所持: ' + invHtml : ''}</div>
                 </div>
                 <div class="mice-row">手元: ${p.mice}匹<br/><div class="mice-container">${miceHtml}</div></div>
-                <div class="wip-row">
-                    ${wipHtml || '<span class="wip-empty">進行中なし</span>'}
-                </div>
+                <div class="wip-row">${wipHtml || '<span class="wip-empty">進行中なし</span>'}</div>
             `;
             list.appendChild(card);
         });
     }
 
-    placeBid() {
-        const amount = parseInt(document.getElementById('bidAmount').value);
+    placeBidFromInput() {
+        const input = document.getElementById('bidAmount');
+        const amount = Number(input.value);
         const player = this.players[this.auction.activePlayerIdx];
 
+        if (!Number.isInteger(amount) || amount < 1) {
+            if (!player.isCPU) this.message('1以上の整数を入力してください！');
+            return;
+        }
+
+        this.placeBid(amount);
+    }
+
+    placeBid(amount) {
+        if (!this.currentCard) return;
+
+        const player = this.players[this.auction.activePlayerIdx];
+
+        if (!Number.isInteger(amount) || amount < 1) {
+            if (!player.isCPU) this.message('1以上の整数を入力してください！');
+            return;
+        }
         if (amount > player.mice) {
-            if(!player.isCPU) this.message("部下が足りません！");
+            if (!player.isCPU) this.message('部下が足りません！');
             return;
         }
         if (amount <= this.auction.highestBid) {
-            if(!player.isCPU) this.message("現在の最高値より高く！");
+            if (!player.isCPU) this.message('現在の最高値より高く！');
             return;
         }
 
         this.auction.highestBid = amount;
-        this.auction.highestBidder = player;
-        this.addLog(`${player.name}: ${amount}匹宣言`, "auction");
-        
+        this.auction.highestBidderId = player.id;
+        this.addLog(`${player.name}: ${amount}匹宣言`, 'auction');
         this.nextTurn();
     }
 
     passBid() {
+        if (!this.currentCard) return;
+
         const playerIdx = this.auction.activePlayerIdx;
         this.auction.participants = this.auction.participants.filter(idx => idx !== playerIdx);
-        this.addLog(`${this.players[playerIdx].name}: パス`, "pass");
+        this.addLog(`${this.players[playerIdx].name}: パス`, 'pass');
 
-        if (this.auction.participants.length === 1 && this.auction.highestBidder && this.auction.participants[0] === this.auction.highestBidder.id) {
+        if (
+            this.auction.participants.length === 1 &&
+            this.auction.highestBidderId !== null &&
+            this.auction.participants[0] === this.auction.highestBidderId
+        ) {
             this.resolveAuction();
         } else if (this.auction.participants.length === 0) {
             this.resolveAuction();
@@ -984,18 +857,18 @@ class Game {
     }
 
     nextTurn() {
-        let currentIndex = this.auction.activePlayerIdx;
+        const currentIndex = this.auction.activePlayerIdx;
         let nextIdx = -1;
 
         for (let i = 1; i <= this.players.length; i++) {
-            let checkIdx = (currentIndex + i) % this.players.length;
+            const checkIdx = (currentIndex + i) % this.players.length;
             if (this.auction.participants.includes(checkIdx)) {
                 nextIdx = checkIdx;
                 break;
             }
         }
 
-        if (nextIdx === -1 || (this.auction.highestBidder && nextIdx === this.auction.highestBidder.id)) {
+        if (nextIdx === -1 || (this.auction.highestBidderId !== null && nextIdx === this.auction.highestBidderId)) {
             this.resolveAuction();
         } else {
             this.auction.activePlayerIdx = nextIdx;
@@ -1004,14 +877,22 @@ class Game {
     }
 
     resolveAuction() {
-        const winner = this.auction.highestBidder;
+        clearTimeout(this.cpuTimer);
+        this.cpuTimer = null;
+
+        const winner = this.auction.highestBidderId !== null
+            ? this.players[this.auction.highestBidderId]
+            : null;
+
         if (!winner) {
-            this.addLog("誰も落札しませんでした。", "system");
+            this.addLog('誰も落札しませんでした。カードを流します。', 'system');
+            this.discardCard(this.currentCard);
+            this.currentCard = null;
             this.startNewRound();
             return;
         }
 
-        this.addLog(`${winner.name}が ${this.auction.highestBid}匹で落札！`, "win");
+        this.addLog(`${winner.name}が ${this.auction.highestBid}匹で落札！`, 'win');
         this.parentIdx = winner.id;
 
         this.players.forEach(p => {
@@ -1027,38 +908,50 @@ class Game {
             miceOnCard: this.auction.highestBid
         });
 
+        this.currentCard = null;
+        document.getElementById('bidControls').classList.add('disabled-ui');
         this.renderPlayers();
+        this.saveState();
+
         setTimeout(() => this.checkCompletedJobs(), 300);
     }
 
-    async checkCompletedJobs() {
-        const completed = [];
-        this.players.forEach(p => {
-            const finished = p.wip.filter(job => job.miceOnCard <= 0);
-            p.wip = p.wip.filter(job => job.miceOnCard > 0);
-            finished.forEach(f => completed.push({ player: p, card: f.card }));
-        });
+    findCompletedJob() {
+        for (const player of this.players) {
+            const index = player.wip.findIndex(job => job.miceOnCard <= 0);
+            if (index >= 0) return { player, index, job: player.wip[index] };
+        }
+        return null;
+    }
 
-        if (completed.length > 0) {
-            for (let job of completed) {
-                await this.resolveJob(job.player, job.card);
-                if (this.players.some(p => p.score >= WIN_SCORE)) {
-                    break;
-                }
+    async checkCompletedJobs() {
+        let entry = this.findCompletedJob();
+
+        while (entry) {
+            const { player, job } = entry;
+            await this.resolveJob(player, job.card);
+
+            const currentIndex = player.wip.indexOf(job);
+            if (currentIndex >= 0) player.wip.splice(currentIndex, 1);
+
+            if (job.card.type === CARD_TYPES.NORMAL) {
+                this.discardCard(job.card);
             }
+
+            this.saveState();
+
+            if (this.players.some(p => p.score >= WIN_SCORE)) break;
+            entry = this.findCompletedJob();
         }
-        
+
         const isGameOver = this.players.some(p => p.score >= WIN_SCORE);
-        if(!isGameOver) {
-            this.startNewRound();
-        } else {
-            this.checkWinner();
-        }
+        if (!isGameOver) this.startNewRound();
+        else this.checkWinner();
     }
 
     async resolveJob(player, card) {
         this.activeJob = { player, card };
-        
+
         return new Promise(resolve => {
             const overlay = document.getElementById('modalOverlay');
             const title = document.getElementById('modalTitle');
@@ -1066,24 +959,20 @@ class Game {
             const dice = document.getElementById('diceDisplay');
             const reroll = document.getElementById('rerollArea');
             const okBtn = document.getElementById('modalOkBtn');
-            
+
             overlay.classList.remove('hidden');
             title.innerText = `${player.name}の仕事完了！`;
             reroll.classList.add('hidden');
-            
-            if (card.type !== CARD_TYPES.NORMAL) {
-                diceTypeDisplay.classList.add('hidden'); 
-                
-                dice.classList.add('small-text'); 
-                dice.innerHTML = `<span style="color: #9333ea; font-weight: bold;">${this.getCardName(card)}</span><br><span style="font-size: 1rem; color: black;">を能力として獲得した！</span>`; 
-                
-                player.inventory.push(card);
-                this.addLog(`${player.name}: ${this.getCardName(card)} 獲得`, "skill");
-                this.renderPlayers();
 
-                this.modalResolve = () => {
-                    resolve();
-                };
+            if (card.type !== CARD_TYPES.NORMAL) {
+                diceTypeDisplay.classList.add('hidden');
+                dice.classList.add('small-text');
+                dice.innerHTML = `<span style="color: #9333ea; font-weight: bold;">${this.getCardName(card)}</span><br><span style="font-size: 1rem; color: black;">を能力として獲得した！</span>`;
+
+                player.inventory.push(card);
+                this.addLog(`${player.name}: ${this.getCardName(card)} 獲得`, 'skill');
+
+                this.modalResolve = () => resolve();
 
                 if (player.isCPU) {
                     okBtn.style.display = 'none';
@@ -1096,20 +985,19 @@ class Game {
 
             diceTypeDisplay.innerText = `【 ${card.value}面体サイコロ 】`;
             diceTypeDisplay.classList.remove('hidden');
-
-            dice.innerText = "?";
+            dice.innerText = '?';
             dice.classList.remove('small-text');
-            
+
             const hasBigCheese = player.inventory.some(c => c.type === CARD_TYPES.BIG_CHEESE);
             okBtn.style.display = 'none';
 
-            this.modalResolve = (val) => {
+            this.modalResolve = val => {
                 player.score += val;
-                this.addLog(`${player.name}: ${val}点獲得！`, "score");
+                this.addLog(`${player.name}: ${val}点獲得！`, 'score');
                 this.renderPlayers();
-                resolve(); 
+                resolve();
             };
-            
+
             let rollCount = 0;
             const maxRolls = 12;
             const rollInterval = 60;
@@ -1117,10 +1005,9 @@ class Game {
             const rollAnimation = setInterval(() => {
                 dice.innerText = this.rollDice(card.value);
                 rollCount++;
-                
+
                 if (rollCount >= maxRolls) {
                     clearInterval(rollAnimation);
-                    
                     const finalResult = this.rollDice(card.value);
                     dice.innerText = finalResult;
                     this.lastDiceResult = finalResult;
@@ -1130,9 +1017,9 @@ class Game {
                         let shouldReroll = false;
 
                         if (finalResult < remainingToWin) {
-                            const expectedAverage = card.value / 2;
-                            if (finalResult <= expectedAverage || card.value >= remainingToWin) {
-                                shouldReroll = Math.random() < 0.85;
+                            const expectedAverage = (card.value + 1) / 2;
+                            if (finalResult < expectedAverage || card.value >= remainingToWin) {
+                                shouldReroll = Math.random() < 0.75;
                             }
                         }
 
@@ -1151,74 +1038,80 @@ class Game {
     }
 
     rollDice(sides) {
-        if (sides === 2) {
-            const roll = Math.floor(Math.random() * 20) + 1;
-            return roll <= 10 ? 1 : 2;
-        }
         return Math.floor(Math.random() * sides) + 1;
     }
 
     useBigCheese() {
+        if (!this.activeJob) return;
+
         const { player, card } = this.activeJob;
         const bcIdx = player.inventory.findIndex(c => c.type === CARD_TYPES.BIG_CHEESE);
-        if (bcIdx > -1) {
-            player.inventory.splice(bcIdx, 1);
-            const dice = document.getElementById('diceDisplay');
-            dice.innerText = "...";
-            this.addLog(`${player.name}: ビッグ・チーズを使用して振り直し！`, "skill");
-            
-            document.getElementById('rerollArea').classList.add('hidden');
-            document.getElementById('modalOkBtn').style.display = 'none';
-            
-            setTimeout(() => {
-                let rollCount = 0;
-                const maxRolls = 12;
-                const rollInterval = 60;
+        if (bcIdx < 0) return;
 
-                const rollAnimation = setInterval(() => {
-                    dice.innerText = this.rollDice(card.value);
-                    rollCount++;
-                    
-                    if (rollCount >= maxRolls) {
-                        clearInterval(rollAnimation);
-                        
-                        const finalResult = this.rollDice(card.value);
-                        dice.innerText = finalResult;
-                        this.lastDiceResult = finalResult;
-                        
-                        if (player.isCPU) {
-                            setTimeout(() => this.closeModal(), 2000);
-                        } else {
-                            document.getElementById('modalOkBtn').style.display = 'inline-block';
-                        }
+        const [usedCard] = player.inventory.splice(bcIdx, 1);
+        this.discardCard(usedCard);
+        this.saveState();
+
+        const dice = document.getElementById('diceDisplay');
+        dice.innerText = '...';
+        this.addLog(`${player.name}: ビッグ・チーズを使用して振り直し！`, 'skill');
+
+        document.getElementById('rerollArea').classList.add('hidden');
+        document.getElementById('modalOkBtn').style.display = 'none';
+
+        setTimeout(() => {
+            let rollCount = 0;
+            const maxRolls = 12;
+            const rollInterval = 60;
+
+            const rollAnimation = setInterval(() => {
+                dice.innerText = this.rollDice(card.value);
+                rollCount++;
+
+                if (rollCount >= maxRolls) {
+                    clearInterval(rollAnimation);
+                    const finalResult = this.rollDice(card.value);
+                    dice.innerText = finalResult;
+                    this.lastDiceResult = finalResult;
+
+                    if (player.isCPU) {
+                        setTimeout(() => this.closeModal(), 2000);
+                    } else {
+                        document.getElementById('modalOkBtn').style.display = 'inline-block';
                     }
-                }, rollInterval);
-            }, 500);
-        }
+                }
+            }, rollInterval);
+        }, 500);
     }
 
     useVeto() {
+        if (!this.currentCard) return;
+
         const activePlayer = this.players[this.auction.activePlayerIdx];
         const vIdx = activePlayer.inventory.findIndex(c => c.type === CARD_TYPES.VETO);
-        if (vIdx > -1) {
-            activePlayer.inventory.splice(vIdx, 1);
-            this.addLog(`${activePlayer.name}: 「却下(VETO)」発動！ 現在の仕事を破棄します。`, "skill");
-            this.startNewRound();
-        }
+        if (vIdx < 0) return;
+
+        const [usedVeto] = activePlayer.inventory.splice(vIdx, 1);
+        this.discardCard(usedVeto);
+        this.discardCard(this.currentCard);
+
+        this.addLog(`${activePlayer.name}: 「却下(VETO)」発動！ 現在のカードを破棄します。`, 'skill');
+        this.currentCard = null;
+        this.startNewRound();
     }
 
     closeModal() {
         document.getElementById('modalOverlay').classList.add('hidden');
         if (this.modalResolve) {
             this.modalResolve(this.lastDiceResult);
-            this.modalResolve = null; 
+            this.modalResolve = null;
         }
     }
 
     checkWinner() {
         const winners = this.players.filter(p => p.score >= WIN_SCORE);
         if (winners.length > 0) {
-            winners.sort((a,b) => b.score - a.score);
+            winners.sort((a, b) => b.score - a.score);
             this.showGameOver(winners[0]);
             return true;
         }
@@ -1228,35 +1121,37 @@ class Game {
     showGameOver(winner) {
         clearTimeout(this.cpuTimer);
         document.getElementById('bidControls').classList.add('disabled-ui');
-
-        localStorage.removeItem('bigCheeseSave');
+        localStorage.removeItem(SAVE_KEY);
 
         const overlay = document.getElementById('modalOverlay');
         const title = document.getElementById('modalTitle');
-        const diceTypeDisplay = document.getElementById('diceTypeDisplay'); 
+        const diceTypeDisplay = document.getElementById('diceTypeDisplay');
         const dice = document.getElementById('diceDisplay');
         const reroll = document.getElementById('rerollArea');
         const okBtn = document.getElementById('modalOkBtn');
 
         overlay.classList.remove('hidden');
-        diceTypeDisplay.classList.add('hidden'); 
-        title.innerText = `ゲーム終了！`;
-        
-        dice.classList.add('small-text'); 
-        dice.innerHTML = `<div style="margin-top: 0.5rem; color: #1f2937;">勝者: <span style="color:${winner.color}">${winner.name}</span></div><div style="font-size: 2.25rem; margin-top: 0.5rem;">${winner.score} 点</div>`; 
+        diceTypeDisplay.classList.add('hidden');
+        title.innerText = 'ゲーム終了！';
+
+        dice.classList.add('small-text');
+        dice.innerHTML = `<div style="margin-top: 0.5rem; color: #1f2937;">勝者: <span style="color:${winner.color}">${winner.name}</span></div><div style="font-size: 2.25rem; margin-top: 0.5rem;">${winner.score} 点</div>`;
         reroll.classList.add('hidden');
-        
-        okBtn.innerText = "もう一度遊ぶ";
+
+        okBtn.innerText = 'もう一度遊ぶ';
         okBtn.style.display = 'inline-block';
-        
+
         okBtn.onclick = () => {
             overlay.classList.add('hidden');
-            okBtn.innerText = "OK"; 
-            okBtn.onclick = () => game.closeModal(); 
+            okBtn.innerText = 'OK';
+            okBtn.onclick = () => game.closeModal();
             dice.classList.remove('small-text');
-            
+
             this.players = [];
             this.deck = [];
+            this.discardPile = [];
+            this.currentCard = null;
+            this.auction = this.createEmptyAuction();
             this.log.innerHTML = '<div class="text-gray-400">> ゲームを再開しました。</div>';
             this.init();
         };
@@ -1265,17 +1160,17 @@ class Game {
 
     addLog(msg, type = 'default') {
         const div = document.createElement('div');
-        
-        let colorClass = "text-gray-200"; 
-        switch(type) {
-            case 'system': colorClass = "text-gray-400"; break;
-            case 'auction': colorClass = "text-blue-300"; break;
-            case 'pass': colorClass = "text-red-400"; break;
-            case 'win': colorClass = "text-yellow-400 font-bold"; break;
-            case 'skill': colorClass = "text-purple-400 font-bold"; break;
-            case 'score': colorClass = "text-green-400 font-bold"; break;
+        let colorClass = 'text-gray-200';
+
+        switch (type) {
+            case 'system': colorClass = 'text-gray-400'; break;
+            case 'auction': colorClass = 'text-blue-300'; break;
+            case 'pass': colorClass = 'text-red-400'; break;
+            case 'win': colorClass = 'text-yellow-400 font-bold'; break;
+            case 'skill': colorClass = 'text-purple-400 font-bold'; break;
+            case 'score': colorClass = 'text-green-400 font-bold'; break;
         }
-        
+
         div.className = `mb-1 ${colorClass}`;
         div.innerText = `> ${msg}`;
         this.log.prepend(div);
@@ -1283,7 +1178,7 @@ class Game {
 
     message(msg) {
         const div = document.createElement('div');
-        div.className = "toast-msg pixel-border pop"; 
+        div.className = 'toast-msg pixel-border pop';
         div.innerText = msg;
         document.body.appendChild(div);
         setTimeout(() => div.remove(), 2000);
@@ -1296,11 +1191,11 @@ window.onload = () => {
 };
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('Service Worker registered', reg))
-      .catch(err => console.error('Service Worker registration failed', err));
-  });
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker registered', reg))
+            .catch(err => console.error('Service Worker registration failed', err));
+    });
 }
 </script>
 </body>
