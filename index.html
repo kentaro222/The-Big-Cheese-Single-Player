@@ -139,6 +139,14 @@
         .modal-dice.small-text { font-size: 1.875rem; }
         .modal-reroll { margin-bottom: 1rem; }
         .modal-actions { display: flex; justify-content: center; gap: 1rem; }
+        .auction-result-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; z-index: 55; }
+        .auction-result-card { background: #f8fafc; color: #111827; width: min(88vw, 22rem); padding: 1.25rem; border-radius: 0.75rem; text-align: center; animation: auction-result-pop 0.18s ease-out; }
+        .auction-result-title { font-size: 1.75rem; line-height: 1.1; font-weight: 900; margin-bottom: 0.6rem; }
+        .auction-result-player { font-size: 1.35rem; font-weight: 900; margin-bottom: 0.25rem; }
+        .auction-result-detail { font-size: 1rem; font-weight: bold; color: #374151; margin-bottom: 0.75rem; }
+        .auction-result-card-image { width: 96px; height: 96px; margin: 0 auto; background-size: cover; background-position: center; border-radius: 0.5rem; }
+        .auction-result-card-name { margin-top: 0.45rem; font-size: 0.875rem; color: #6b7280; font-weight: bold; }
+        @keyframes auction-result-pop { 0% { transform: scale(0.82); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .hidden { display: none !important; }
         .disabled-ui { pointer-events: none; opacity: 0.5; }
         .text-gray-400 { color: #9ca3af; }
@@ -193,6 +201,16 @@
     <div class="footer">
         <button onclick="confirmReset()" class="footer-link">進行状態をリセットして最初から遊ぶ</button>
         <a href="bigcheese_guide.html" class="guide-btn" title="プレイガイドを開く">?</a>
+    </div>
+</div>
+
+<div id="auctionResultOverlay" class="auction-result-overlay hidden">
+    <div class="auction-result-card pixel-border">
+        <div id="auctionResultTitle" class="auction-result-title">落札！</div>
+        <div id="auctionResultPlayer" class="auction-result-player"></div>
+        <div id="auctionResultDetail" class="auction-result-detail"></div>
+        <div id="auctionResultCardImage" class="auction-result-card-image pixel-border hidden"></div>
+        <div id="auctionResultCardName" class="auction-result-card-name"></div>
     </div>
 </div>
 
@@ -257,6 +275,7 @@ class Game {
         this.modalResolve = null;
         this.activeJob = null;
         this.lastDiceResult = null;
+        this.transitionInProgress = false;
         this.init();
     }
 
@@ -876,23 +895,38 @@ class Game {
         }
     }
 
-    resolveAuction() {
+    async resolveAuction() {
+        if (this.transitionInProgress) return;
+        this.transitionInProgress = true;
+
         clearTimeout(this.cpuTimer);
         this.cpuTimer = null;
+        document.getElementById('bidControls').classList.add('disabled-ui');
 
+        const resolvedCard = this.currentCard;
+        const winningBid = this.auction.highestBid;
         const winner = this.auction.highestBidderId !== null
             ? this.players[this.auction.highestBidderId]
             : null;
 
         if (!winner) {
             this.addLog('誰も落札しませんでした。カードを流します。', 'system');
-            this.discardCard(this.currentCard);
+            this.discardCard(resolvedCard);
             this.currentCard = null;
+            this.saveState();
+
+            await this.showAuctionResult({
+                type: 'pass',
+                card: resolvedCard,
+                duration: 950
+            });
+
+            this.transitionInProgress = false;
             this.startNewRound();
             return;
         }
 
-        this.addLog(`${winner.name}が ${this.auction.highestBid}匹で落札！`, 'win');
+        this.addLog(`${winner.name}が ${winningBid}匹で落札！`, 'win');
         this.parentIdx = winner.id;
 
         this.players.forEach(p => {
@@ -902,18 +936,70 @@ class Game {
             });
         });
 
-        winner.mice -= this.auction.highestBid;
+        winner.mice -= winningBid;
         winner.wip.push({
-            card: this.currentCard,
-            miceOnCard: this.auction.highestBid
+            card: resolvedCard,
+            miceOnCard: winningBid
         });
 
         this.currentCard = null;
-        document.getElementById('bidControls').classList.add('disabled-ui');
         this.renderPlayers();
         this.saveState();
 
-        setTimeout(() => this.checkCompletedJobs(), 300);
+        await this.showAuctionResult({
+            type: 'win',
+            player: winner,
+            bid: winningBid,
+            card: resolvedCard,
+            duration: 1200
+        });
+
+        this.transitionInProgress = false;
+        await this.checkCompletedJobs();
+    }
+
+    showAuctionResult({ type, player = null, bid = null, card = null, duration = 1100 }) {
+        const overlay = document.getElementById('auctionResultOverlay');
+        const title = document.getElementById('auctionResultTitle');
+        const playerEl = document.getElementById('auctionResultPlayer');
+        const detail = document.getElementById('auctionResultDetail');
+        const cardImage = document.getElementById('auctionResultCardImage');
+        const cardName = document.getElementById('auctionResultCardName');
+
+        if (type === 'win') {
+            title.innerText = '落札！';
+            playerEl.innerText = player ? player.name : '';
+            playerEl.style.color = player ? player.color : '#111827';
+            detail.innerText = `${bid}匹で競り勝ち`;
+        } else if (type === 'veto') {
+            title.innerText = 'VETO!';
+            playerEl.innerText = player ? `${player.name} が却下` : '競りは却下';
+            playerEl.style.color = player ? player.color : '#9333ea';
+            detail.innerText = 'このカードは流れました';
+        } else {
+            title.innerText = '全員パス';
+            playerEl.innerText = '落札者なし';
+            playerEl.style.color = '#6b7280';
+            detail.innerText = 'このカードは流れました';
+        }
+
+        const imgUrl = this.getCardImageUrl(card);
+        if (imgUrl) {
+            cardImage.style.backgroundImage = `url('${imgUrl}')`;
+            cardImage.classList.remove('hidden');
+        } else {
+            cardImage.style.backgroundImage = 'none';
+            cardImage.classList.add('hidden');
+        }
+        cardName.innerText = card ? this.getCardName(card) : '';
+
+        overlay.classList.remove('hidden');
+        return new Promise(resolve => {
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                resolve();
+            }, duration);
+        });
     }
 
     findCompletedJob() {
@@ -1084,19 +1170,39 @@ class Game {
         }, 500);
     }
 
-    useVeto() {
-        if (!this.currentCard) return;
+    async useVeto() {
+        if (!this.currentCard || this.transitionInProgress) return;
+        this.transitionInProgress = true;
+
+        clearTimeout(this.cpuTimer);
+        this.cpuTimer = null;
+        document.getElementById('bidControls').classList.add('disabled-ui');
 
         const activePlayer = this.players[this.auction.activePlayerIdx];
         const vIdx = activePlayer.inventory.findIndex(c => c.type === CARD_TYPES.VETO);
-        if (vIdx < 0) return;
+        if (vIdx < 0) {
+            this.transitionInProgress = false;
+            return;
+        }
 
+        const vetoedCard = this.currentCard;
         const [usedVeto] = activePlayer.inventory.splice(vIdx, 1);
         this.discardCard(usedVeto);
-        this.discardCard(this.currentCard);
+        this.discardCard(vetoedCard);
 
         this.addLog(`${activePlayer.name}: 「却下(VETO)」発動！ 現在のカードを破棄します。`, 'skill');
         this.currentCard = null;
+        this.renderPlayers();
+        this.saveState();
+
+        await this.showAuctionResult({
+            type: 'veto',
+            player: activePlayer,
+            card: vetoedCard,
+            duration: 1050
+        });
+
+        this.transitionInProgress = false;
         this.startNewRound();
     }
 
